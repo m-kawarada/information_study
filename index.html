@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Color Picker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .slider {
+            width: 300px;
+            margin: 10px 0;
+        }
+        .color-box {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #333;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>RGB Color Picker</h1>
+    <div class="slider-container">
+        <label for="red">Red: <span id="red-value">128</span></label>
+        <input type="range" id="red" class="slider" min="0" max="255" value="128">
+        
+        <label for="green">Green: <span id="green-value">128</span></label>
+        <input type="range" id="green" class="slider" min="0" max="255" value="128">
+        
+        <label for="blue">Blue: <span id="blue-value">128</span></label>
+        <input type="range" id="blue" class="slider" min="0" max="255" value="128">
+    </div>
+    <div class="color-box" id="color-box"></div>
+
+    <script>
+        const redSlider = document.getElementById('red');
+        const greenSlider = document.getElementById('green');
+        const blueSlider = document.getElementById('blue');
+        const redValue = document.getElementById('red-value');
+        const greenValue = document.getElementById('green-value');
+        const blueValue = document.getElementById('blue-value');
+        const colorBox = document.getElementById('color-box');
+
+        function updateColor() {
+            const red = redSlider.value;
+            const green = greenSlider.value;
+            const blue = blueSlider.value;
+
+            redValue.textContent = red;
+            greenValue.textContent = green;
+            blueValue.textContent = blue;
+
+            const color = `rgb(${red}, ${green}, ${blue})`;
+            colorBox.style.backgroundColor = color;
+        }
+
+        redSlider.addEventListener('input', updateColor);
+        greenSlider.addEventListener('input', updateColor);
+        blueSlider.addEventListener('input', updateColor);
+
+        updateColor(); // 初期色を設定
+    </script>
+</body>
+</html>
