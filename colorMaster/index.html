@@ -1,1 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色当てマスター！RGBカラーコードゲーム</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
 
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #FFC107; /* Amber */
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --text-color: #333;
+            --light-text-color: #666;
+            --border-color: #ddd;
+            --red-slider: #F44336;
+            --green-slider: #4CAF50;
+            --blue-slider: #2196F3;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', 'Montserrat', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .game-container, .score-container, .mode-selection-container {
+            background-color: var(--card-background);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-selection-container h2, .game-area h2, .result-screen h2, .score-container h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .mode-selection-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-selection-buttons button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            background-color: #03A9F4; /* Light Blue */
+            color: white;
+        }
+
+        .mode-selection-buttons button:hover {
+            background-color: #039BE5;
+            transform: translateY(-2px);
+        }
+        .mode-selection-buttons button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .target-color-display {
+            width: 150px;
+            height: 150px;
+            border-radius: 15px;
+            border: 5px dashed var(--border-color);
+            margin-bottom: 30px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-out;
+            cursor: pointer;
+        }
+        .target-color-display:hover {
+            transform: scale(1.02);
+        }
+
+        .color-slider-group {
+            width: 100%;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .color-slider-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .color-slider-group label span.value {
+            font-family: 'Montserrat', monospace;
+            font-size: 1em;
+            background-color: var(--background-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            min-width: 80px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        input[type="range"] {
+            width: calc(100% - 20px);
+            -webkit-appearance: none;
+            height: 15px;
+            border-radius: 10px;
+            outline: none;
+            transition: opacity .2s;
+            margin: 0 10px;
+            background-color: #e0e0e0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: grab;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            border: 3px solid #fff;
+            transition: background 0.3s ease, transform 0.1s ease-in-out;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: grab;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            border: 3px solid #fff;
+            transition: background 0.3s ease, transform 0.1s ease-in-out;
+        }
+
+        input[type="range"].red::-webkit-slider-thumb { background: var(--red-slider); }
+        input[type="range"].green::-webkit-slider-thumb { background: var(--green-slider); }
+        input[type="range"].blue::-webkit-slider-thumb { background: var(--blue-slider); }
+        input[type="range"].red::-moz-range-thumb { background: var(--red-slider); }
+        input[type="range"].green::-moz-range-thumb { background: var(--green-slider); }
+        input[type="range"].blue::-moz-range-thumb { background: var(--blue-slider); }
+
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+            cursor: grabbing;
+        }
+        input[type="range"]:active::-moz-range-thumb {
+            transform: scale(1.1);
+            cursor: grabbing;
+        }
+
+        .hex-display {
+            font-family: 'Montserrat', monospace;
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: #fff;
+            border-radius: 10px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease;
+            cursor: help;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap; /* ボタンが多いため折り返しを許可 */
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-width: 150px;
+        }
+
+        button#submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        button#submit-btn:hover {
+            background-color: #43A047;
+            transform: translateY(-2px);
+        }
+        button#submit-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        button.action-btn {
+            background-color: #03A9F4; /* Light Blue */
+            color: white;
+        }
+        button.action-btn:hover {
+            background-color: #039BE5;
+            transform: translateY(-2px);
+        }
+        button.action-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        button#reset-game-btn {
+            background-color: #FF5722; /* Deep Orange */
+            color: white;
+        }
+        button#reset-game-btn:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        button#end-game-btn {
+            background-color: #9E9E9E; /* Grey */
+            color: white;
+        }
+        button#end-game-btn:hover {
+            background-color: #757575;
+            transform: translateY(-2px);
+        }
+
+
+        .result-screen {
+            display: none; /* 初期は非表示 */
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            width: 100%;
+        }
+        
+        /* 答え合わせ後のボタン群の表示スタイル */
+        .result-screen .button-group {
+            display: flex; /* Flexboxを常に適用 */
+        }
+
+        .color-comparison {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .comparison-box {
+            text-align: center;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .comparison-color-display {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            margin: 0 auto 10px;
+            border: 3px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .comparison-box p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            color: var(--light-text-color);
+        }
+
+        .comparison-box .color-code {
+            font-family: 'Montserrat', monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .score-display {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .score-container h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .score-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .score-item:last-child {
+            border-bottom: none;
+        }
+        .score-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .score-item .score-value {
+            font-weight: bold;
+            color: var(--primary-color);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .score-item .color-codes {
+            display: flex;
+            gap: 15px;
+            font-family: 'Montserrat', monospace;
+            font-size: 0.9em;
+        }
+
+        .score-item .color-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        /* 隠しクラス */
+        .hidden {
+            display: none; /* !important を削除 */
+        }
+        
+        /* ボタンを初期状態で非表示にするCSSルール */
+        #next-question-btn, #reset-game-btn, #end-game-btn {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            .game-container, .score-container, .mode-selection-container {
+                padding: 20px;
+            }
+            .button-group, .mode-selection-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            button {
+                width: 100%;
+                min-width: unset;
+                padding: 12px 20px;
+                font-size: 1.1em;
+            }
+            .target-color-display {
+                width: 120px;
+                height: 120px;
+            }
+            .hex-display {
+                font-size: 1.2em;
+            }
+            .score-display {
+                font-size: 2.5em;
+            }
+            .color-comparison {
+                flex-direction: column;
+                align-items: center;
+            }
+            .comparison-box {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 色当てマスター！RGBカラーコードゲーム 🎨</h1>
+
+    <div class="mode-selection-container" id="mode-selection-screen">
+        <h2>モードを選んでね！</h2>
+        <div class="mode-selection-buttons">
+            <button id="normal-mode-btn">🚀 通常モード</button>
+            <button id="easy-mode-btn">👶 イージーモード</button>
+        </div>
+    </div>
+
+    <div class="game-container hidden" id="game-container-main">
+        <div class="game-area" id="game-area">
+            <h2>この色は何色？</h2>
+            <div class="target-color-display" id="target-color-display"></div>
+
+            <div class="color-slider-group">
+                <label for="red-slider">
+                    <span>🔴 赤 (R)</span>
+                    <span class="value" id="red-value-dec">0</span>
+                    <span class="value" id="red-value-bin">00000000</span>
+                    <span class="value" id="red-value-hex">00</span>
+                </label>
+                <input type="range" id="red-slider" class="red" min="0" max="255" value="0">
+            </div>
+
+            <div class="color-slider-group">
+                <label for="green-slider">
+                    <span>🟢 緑 (G)</span>
+                    <span class="value" id="green-value-dec">0</span>
+                    <span class="value" id="green-value-bin">00000000</span>
+                    <span class="value" id="green-value-hex">00</span>
+                </label>
+                <input type="range" id="green-slider" class="green" min="0" max="255" value="0">
+            </div>
+
+            <div class="color-slider-group">
+                <label for="blue-slider">
+                    <span>🔵 青 (B)</span>
+                    <span class="value" id="blue-value-dec">0</span>
+                    <span class="value" id="blue-value-bin">00000000</span>
+                    <span class="value" id="blue-value-hex">00</span>
+                </label>
+                <input type="range" id="blue-slider" class="blue" min="0" max="255" value="0">
+            </div>
+
+            <div class="hex-display" id="current-hex-code">#000000</div>
+
+            <div class="button-group">
+                <button id="submit-btn">決定！答え合わせ</button>
+            </div>
+        </div>
+
+        <div class="result-screen hidden" id="result-screen">
+            <h2>結果発表！</h2>
+            <div class="score-display" id="score-display">100点</div>
+
+            <div class="color-comparison">
+                <div class="comparison-box">
+                    <p>あなたの回答</p>
+                    <div class="comparison-color-display" id="player-color-display"></div>
+                    <p class="color-code" id="player-color-code">#000000</p>
+                </div>
+                <div class="comparison-box">
+                    <p>正解の色</p>
+                    <div class="comparison-color-display" id="correct-color-display"></div>
+                    <p class="color-code" id="correct-color-code">#000000</p>
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="next-question-btn" class="action-btn">次の問題へ</button>
+                <button id="reset-game-btn" class="action-btn">ゲームをリセット</button>
+                <button id="end-game-btn" class="action-btn">ゲーム終了</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="score-container hidden" id="score-container-main">
+        <h2>🏆 最近のスコア (最大10回)</h2>
+        <ul id="score-list" class="score-list">
+            </ul>
+        <p style="text-align: center; margin-top: 20px; font-size: 0.9em; color: var(--light-text-color);">
+            スコアはブラウザを閉じると消えます。
+        </p>
+    </div>
+
+    <script>
+        const modeSelectionScreen = document.getElementById('mode-selection-screen');
+        const normalModeBtn = document.getElementById('normal-mode-btn');
+        const easyModeBtn = document.getElementById('easy-mode-btn');
+
+        const gameContainerMain = document.getElementById('game-container-main');
+        const scoreContainerMain = document.getElementById('score-container-main');
+
+        const targetColorDisplay = document.getElementById('target-color-display');
+        const redSlider = document.getElementById('red-slider');
+        const greenSlider = document.getElementById('green-slider');
+        const blueSlider = document.getElementById('blue-slider');
+
+        const redValueDec = document.getElementById('red-value-dec');
+        const redValueBin = document.getElementById('red-value-bin');
+        const redValueHex = document.getElementById('red-value-hex');
+        const greenValueDec = document.getElementById('green-value-dec');
+        const greenValueBin = document.getElementById('green-value-bin');
+        const greenValueHex = document.getElementById('green-value-hex');
+        const blueValueDec = document.getElementById('blue-value-dec');
+        const blueValueBin = document.getElementById('blue-value-bin');
+        const blueValueHex = document.getElementById('blue-value-hex');
+
+        const currentHexCodeDisplay = document.getElementById('current-hex-code');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const resetGameBtn = document.getElementById('reset-game-btn');
+        const endGameBtn = document.getElementById('end-game-btn');
+        const gameArea = document.getElementById('game-area');
+        const resultScreen = document.getElementById('result-screen');
+
+        const scoreDisplay = document.getElementById('score-display');
+        const playerColorDisplay = document.getElementById('player-color-display');
+        const playerColorCode = document.getElementById('player-color-code');
+        const correctColorDisplay = document.getElementById('correct-color-display');
+        const correctColorCode = document.getElementById('correct-color-code');
+        const scoreList = document.getElementById('score-list');
+
+        let targetColor = {}; // {r, g, b}
+        let currentScores = []; // [{target: '#RRGGBB', player: '#RRGGBB', score: 100}]
+        let gameMode = 'normal'; // 'normal' or 'easy'
+
+        // ヘルパー関数: 数値を2桁の16進数に変換
+        function toHex(c) {
+            const hex = c.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }
+
+        // ヘルパー関数: 数値を8桁の2進数に変換
+        function toBin(c) {
+            const bin = c.toString(2);
+            return '0'.repeat(8 - bin.length) + bin;
+        }
+
+        // RGB値からカラーコードを生成
+        function rgbToHex(r, g, b) {
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+        }
+
+        // 文字色を背景色に応じて白または黒に設定
+        function getContrastColor(r, g, b) {
+            // 輝度計算 (人間の目に合わせた加重平均)
+            const y = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return (y > 0.5) ? '#333' : '#eee'; // 明るければ黒、暗ければ白
+        }
+
+        // スライダーの値が変更されたときに色と数値を更新
+        function updateColorAndValues() {
+            const r = parseInt(redSlider.value);
+            const g = parseInt(greenSlider.value);
+            const b = parseInt(blueSlider.value);
+
+            redValueDec.textContent = r;
+            redValueBin.textContent = toBin(r);
+            redValueHex.textContent = toHex(r).toUpperCase();
+
+            greenValueDec.textContent = g;
+            greenValueBin.textContent = toBin(g);
+            greenValueHex.textContent = toHex(g).toUpperCase();
+
+            blueValueDec.textContent = b;
+            blueValueBin.textContent = toBin(b);
+            blueValueHex.textContent = toHex(b).toUpperCase();
+
+            const hexCode = rgbToHex(r, g, b);
+            currentHexCodeDisplay.textContent = hexCode;
+            currentHexCodeDisplay.style.backgroundColor = hexCode;
+            currentHexCodeDisplay.style.color = getContrastColor(r, g, b); // 文字色をコントラストに応じて変更
+        }
+
+        // 新しいランダムな色を生成して表示
+        function generateNewColor() {
+            const r = Math.floor(Math.random() * 246) + 10; // 10-255
+            const g = Math.floor(Math.random() * 246) + 10; // 10-255
+            const b = Math.floor(Math.random() * 246) + 10; // 10-255
+            targetColor = { r, g, b };
+            targetColorDisplay.style.backgroundColor = rgbToHex(r, g, b);
+
+            // スライダーを初期化
+            redSlider.value = 0;
+            greenSlider.value = 0;
+            blueSlider.value = 0;
+            updateColorAndValues(); // 初期値に合わせた表示を更新
+            
+            // 結果画面を非表示にし、ゲーム画面を表示
+            resultScreen.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            submitBtn.style.display = 'block'; // submitボタンを表示
+            nextQuestionBtn.style.display = 'none'; // 他のボタンを非表示
+            resetGameBtn.style.display = 'none';
+            endGameBtn.style.display = 'none';
+        }
+
+        // スコアを計算（色の差を基に100点満点）
+        function calculateScore(targetR, targetG, targetB, playerR, playerG, playerB) {
+            const dr = Math.abs(targetR - playerR);
+            const dg = Math.abs(targetG - playerG);
+            const db = Math.abs(targetB - playerB);
+
+            // 各色の最大差は255
+            // 3色の合計最大差は 255 * 3 = 765
+            const maxDifference = 255 * 3;
+            let currentDifference = dr + dg + db;
+
+            // イージーモードでは差を小さく評価して高得点が出やすくする
+            if (gameMode === 'easy') {
+                currentDifference *= 0.5; // 例: 差を半分として評価
+            }
+
+            // 差が0で100点、差が最大で0点
+            const score = Math.max(0, 100 - (currentDifference / maxDifference) * 100);
+            return Math.round(score); // 四捨五入
+        }
+
+        // スコアリストを更新
+        function updateScoreList() {
+            scoreList.innerHTML = '';
+            currentScores.forEach((scoreItem, index) => {
+                const li = document.createElement('li');
+                li.className = 'score-item';
+                li.innerHTML = `
+                    <span>
+                        <span class="color-box" style="background-color: ${scoreItem.target};"></span>
+                        ${scoreItem.target}
+                        <span style="font-size: 0.8em; color: var(--light-text-color);"> (正解)</span>
+                    </span>
+                    <span>
+                        <span class="color-box" style="background-color: ${scoreItem.player};"></span>
+                        ${scoreItem.player}
+                        <span style="font-size: 0.8em; color: var(--light-text-color);"> (回答)</span>
+                    </span>
+                    <span class="score-value">${scoreItem.score}点</span>
+                `;
+                scoreList.appendChild(li);
+            });
+        }
+
+        // ゲームの開始処理
+        function startGame() {
+            modeSelectionScreen.classList.add('hidden');
+            gameContainerMain.classList.remove('hidden');
+            scoreContainerMain.classList.remove('hidden');
+            generateNewColor();
+            updateScoreList(); // 初期スコアリスト表示
+        }
+
+        // ゲームのリセット処理
+        function resetGame() {
+            currentScores = []; // スコア履歴をクリア
+            updateScoreList();
+            startGame(); // 新しいゲームを開始
+        }
+
+        // ゲームの終了処理（モード選択画面に戻る）
+        function endGame() {
+            gameContainerMain.classList.add('hidden');
+            scoreContainerMain.classList.add('hidden');
+            modeSelectionScreen.classList.remove('hidden');
+            currentScores = []; // スコア履歴をクリア
+            updateScoreList();
+        }
+
+        // モード選択ボタンのイベントリスナー
+        normalModeBtn.addEventListener('click', () => {
+            gameMode = 'normal';
+            redSlider.step = 1;
+            greenSlider.step = 1;
+            blueSlider.step = 1;
+            startGame();
+        });
+
+        easyModeBtn.addEventListener('click', () => {
+            gameMode = 'easy';
+            redSlider.step = 5; // イージーモードではスライダーの段階を粗くする（調整しやすいように）
+            greenSlider.step = 5;
+            blueSlider.step = 5;
+            startGame();
+        });
+
+
+        // イベントリスナーの設定
+        redSlider.addEventListener('input', updateColorAndValues);
+        greenSlider.addEventListener('input', updateColorAndValues);
+        blueSlider.addEventListener('input', updateColorAndValues);
+
+        submitBtn.addEventListener('click', () => {
+            const playerR = parseInt(redSlider.value);
+            const playerG = parseInt(greenSlider.value);
+            const playerB = parseInt(blueSlider.value);
+            const playerHex = rgbToHex(playerR, playerG, playerB);
+            const targetHex = rgbToHex(targetColor.r, targetColor.g, targetColor.b);
+
+            const score = calculateScore(targetColor.r, targetColor.g, targetColor.b, playerR, playerG, playerB);
+
+            scoreDisplay.textContent = `${score}点`;
+            playerColorDisplay.style.backgroundColor = playerHex;
+            playerColorCode.textContent = playerHex;
+            correctColorDisplay.style.backgroundColor = targetHex;
+            correctColorCode.textContent = targetHex;
+
+            // スコア履歴に追加 (最大10件)
+            currentScores.unshift({ target: targetHex, player: playerHex, score: score, mode: gameMode });
+            if (currentScores.length > 10) {
+                currentScores.pop();
+            }
+            updateScoreList();
+
+            // ゲーム画面を非表示にし、結果画面を表示
+            gameArea.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            submitBtn.style.display = 'none'; // submitボタンを非表示
+            nextQuestionBtn.style.display = 'inline-block'; // 次の問題ボタンを表示
+            resetGameBtn.style.display = 'inline-block'; // リセットボタンを表示
+            endGameBtn.style.display = 'inline-block'; // 終了ボタンを表示
+        });
+
+        nextQuestionBtn.addEventListener('click', () => {
+            generateNewColor();
+        });
+
+        resetGameBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        endGameBtn.addEventListener('click', () => {
+            endGame();
+        });
+        
+        // 初期表示はモード選択画面
+        // startGame() や generateNewColor() はモード選択後に呼ばれる
+    </script>
+</body>
+</html>
