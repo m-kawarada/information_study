@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Transformer ✨</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Image Transformer ✨</h1>
+        <p class="description">画像をアップロードして、カラーや解像度を自由に変えてみよう！</p>
+
+        <div class="upload-area" id="uploadArea">
+            <p>ここに画像をドラッグ＆ドロップ</p>
+            <p>または</p>
+            <input type="file" id="imageUpload" accept="image/*" class="file-input">
+            <label for="imageUpload" class="custom-file-upload">ファイルを選択</label>
+        </div>
+
+        <div class="image-display-area">
+            <div class="image-card">
+                <h2>オリジナル画像</h2>
+                <div class="image-wrapper">
+                    <img id="originalImage" src="https://via.placeholder.com/500x400?text=Upload+Image" alt="オリジナル画像">
+                </div>
+            </div>
+
+            <div class="image-card">
+                <h2>変換された画像</h2>
+                <div class="image-wrapper">
+                    <canvas id="transformedCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <label for="colorBits" class="slider-label">🎨 カラービット数: <span id="colorBitsValue">24</span> bit</label>
+                <input type="range" id="colorBits" min="1" max="24" value="24" class="slider">
+            </div>
+
+            <div class="control-group">
+                <label for="resolution" class="slider-label">📏 解像度: <span id="resolutionValue">100</span> %</label>
+                <input type="range" id="resolution" min="0.1" max="100" value="100" class="slider">
+            </div>
+
+            <button id="resetButton" class="action-button">リセット</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
