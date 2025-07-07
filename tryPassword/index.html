@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>パスワードクラック体験</title>
+  <style>
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
+      text-align: center;
+      padding: 40px;
+      color: #333;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #ff6f61;
+      margin-bottom: 20px;
+      animation: fadeIn 1s ease-in-out;
+    }
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      animation: popIn 1s ease-in-out;
+    }
+    input[type=text] {
+      font-size: 1.2em;
+      padding: 10px;
+      width: 80%;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 2px solid #ccc;
+    }
+    button {
+      background: #ff6f61;
+      color: white;
+      font-size: 1.2em;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background: #e85c50;
+      transform: scale(1.05);
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 1.1em;
+      color: #444;
+      background: #f7f7f7;
+      border-radius: 10px;
+      padding: 20px;
+      height: 200px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .highlight {
+      background-color: yellow;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>パスワードクラック体験！</h1>
+  <div class="container">
+    <p>ログインID: <strong>student123</strong></p>
+    <input type="text" id="targetPassword" placeholder="パスワードを設定 (例: a1b2)" maxlength="4">
+    <br>
+    <button onclick="crackPassword()">クラッキング開始！</button>
+    <div id="output"></div>
+  </div>
+  <script>
+    function crackPassword() {
+      const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+      const target = document.getElementById('targetPassword').value;
+      const output = document.getElementById('output');
+      if (!/^[0-9a-z]{4}$/.test(target)) {
+        output.innerText = '4桁の英小文字または数字で入力してください。';
+        return;
+      }
+
+      output.innerHTML = '<strong>クラッキング開始...</strong><br>';
+      let attempts = 0;
+      const total = Math.pow(chars.length, 4);
+      let index = 0;
+
+      const getPasswordFromIndex = (idx) => {
+        let result = '';
+        for (let i = 0; i < 4; i++) {
+          result = chars.charAt(idx % 36) + result;
+          idx = Math.floor(idx / 36);
+        }
+        return result;
+      };
+
+      const timer = setInterval(() => {
+        if (index >= total) {
+          output.innerHTML += '<br>すべての組み合わせを試しましたが、見つかりませんでした。';
+          clearInterval(timer);
+          return;
+        }
+
+        const guess = getPasswordFromIndex(index);
+        attempts++;
+        output.innerHTML += `試行 <span class="highlight">${attempts}</span>: ${guess}<br>`;
+        output.scrollTop = output.scrollHeight;
+
+        if (guess === target) {
+          output.innerHTML += `<br><strong style="color: green; font-size: 1.2em;">成功！パスワードは「${guess}」でした 🎉🔓</strong>`;
+          clearInterval(timer);
+        }
+        index++;
+      }, 1);
+    }
+  </script>
+</body>
+</html>
