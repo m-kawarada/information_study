@@ -29,8 +29,8 @@
       margin-right: 0.5rem;
     }
 
-    input[type="number"] {
-      width: 60px;
+    input[type="number"], input[type="text"] {
+      width: 160px;
       padding: 0.3rem;
       font-size: 1rem;
       border: 1px solid #ccc;
@@ -45,7 +45,7 @@
       font-size: 1rem;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 1rem;
+      margin: 0.5rem;
       box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
     }
 
@@ -71,10 +71,17 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
+    .history {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff0f5;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
-  <h1>点数暗号化App</h1>
+  <h1>テストの点数暗号化して保存しちゃうぞアプリ</h1>
   <div class="container">
     <div class="subject">
       <div class="input-toggle">
@@ -107,7 +114,18 @@
       </div>
     </div>
     <button onclick="encryptScores()">暗号化する！</button>
+    <button onclick="loadSavedData()">保存データを見る</button>
+    <button onclick="decodeLast()">直前の暗号を復号する</button>
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="inputHex">手入力復号：</label>
+        <input type="text" id="inputHex" placeholder="9桁の16進数">
+        <button onclick="decodeInput()">復号</button>
+      </div>
+    </div>
     <div class="result" id="result"></div>
+    <div class="result" id="decoded"></div>
+    <div class="history" id="history"></div>
   </div>
 
   <script>
@@ -142,7 +160,62 @@
         hexString += parseInt(fourBits, 2).toString(16);
       }
 
-      document.getElementById("result").textContent = `暗号化された16進数: ${hexString.toUpperCase()}`;
+      hexString = hexString.toUpperCase();
+      localStorage.setItem("lastEncrypted", hexString);
+
+      let history = JSON.parse(localStorage.getItem("history") || "[]");
+      history.push(hexString);
+      localStorage.setItem("history", JSON.stringify(history));
+
+      document.getElementById("result").textContent = `暗号化された16進数: ${hexString}`;
+      document.getElementById("decoded").textContent = "";
+    }
+
+    function decodeHexString(hex) {
+      if (!hex || hex.length !== 9) return "無効な入力です。9桁の16進数を入力してください。";
+
+      let bitString = "";
+      for (let i = 0; i < hex.length; i++) {
+        const val = parseInt(hex[i], 16);
+        if (isNaN(val)) return "無効な16進数です。";
+        bitString += val.toString(2).padStart(4, '0');
+      }
+
+      const parityBit = bitString.slice(35, 36);
+      const dataBits = bitString.slice(0, 35);
+
+      if (calculateParity(dataBits) !== parityBit) {
+        return "パリティエラーです";
+      }
+
+      let scores = [];
+      for (let i = 0; i < 35; i += 7) {
+        scores.push(parseInt(dataBits.slice(i, i + 7), 2));
+      }
+      const labels = ["国語", "数学", "英語", "理科", "社会"];
+      return labels.map((label, idx) => `${label}: ${scores[idx]}点`).join(" / ");
+    }
+
+    function decodeLast() {
+      const hex = localStorage.getItem("lastEncrypted");
+      const result = decodeHexString(hex);
+      document.getElementById("decoded").textContent = `復号結果：${result}`;
+    }
+
+    function decodeInput() {
+      const hex = document.getElementById("inputHex").value.trim().toUpperCase();
+      const result = decodeHexString(hex);
+      document.getElementById("decoded").textContent = `復号結果：${result}`;
+    }
+
+    function loadSavedData() {
+      const history = JSON.parse(localStorage.getItem("history") || "[]");
+      if (history.length === 0) {
+        document.getElementById("history").textContent = "保存されたデータはありません。";
+      } else {
+        document.getElementById("history").innerHTML =
+          "<strong>保存された暗号:</strong><br>" + history.map(h => `🔐 ${h}`).join("<br>");
+      }
     }
   </script>
 </body>
