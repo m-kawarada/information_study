@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テストの点数暗号化して保存しちゃうぞアプリ</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #fffafc;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #ff66a3;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .subject {
+      margin: 1rem 0;
+    }
+
+    label {
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 0.3rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #ff99cc;
+      border: none;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 1rem;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover {
+      background-color: #ff66a3;
+    }
+
+    .result {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #cc3399;
+    }
+
+    .input-toggle {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .container {
+      background: #ffe6f0;
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>テストの点数暗号化して保存しちゃうぞアプリ</h1>
+  <div class="container">
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="kokugo">国語：</label>
+        <input type="number" id="kokugo" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="sugaku">数学：</label>
+        <input type="number" id="sugaku" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="eigo">英語：</label>
+        <input type="number" id="eigo" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="rika">理科：</label>
+        <input type="number" id="rika" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="subject">
+      <div class="input-toggle">
+        <label for="shakai">社会：</label>
+        <input type="number" id="shakai" min="0" max="100" value="0">
+      </div>
+    </div>
+    <button onclick="encryptScores()">暗号化する！</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    function padTo7Bit(num) {
+      return num.toString(2).padStart(7, '0');
+    }
+
+    function calculateParity(bits) {
+      const onesCount = bits.split('').filter(b => b === '1').length;
+      return onesCount % 2 === 0 ? '0' : '1';
+    }
+
+    function encryptScores() {
+      const subjects = ["kokugo", "sugaku", "eigo", "rika", "shakai"];
+      let bitString = "";
+
+      for (const subject of subjects) {
+        const score = parseInt(document.getElementById(subject).value, 10);
+        if (isNaN(score) || score < 0 || score > 100) {
+          alert("0～100の範囲で得点を入力してください。");
+          return;
+        }
+        bitString += padTo7Bit(score);
+      }
+
+      const parityBit = calculateParity(bitString);
+      bitString += parityBit;
+
+      let hexString = "";
+      for (let i = 0; i < 36; i += 4) {
+        const fourBits = bitString.slice(i, i + 4).padEnd(4, '0');
+        hexString += parseInt(fourBits, 2).toString(16);
+      }
+
+      document.getElementById("result").textContent = `暗号化された16進数: ${hexString.toUpperCase()}`;
+    }
+  </script>
+</body>
+</html>
