@@ -17,22 +17,26 @@
         h1 {
             color: #cc0066;
         }
-
-        li {
-            width: 250px;
-            height: 50px;
-            border: 2px solid #ff6600;
-            margin-top: 20px;
+        ul {
+            list-style: none; /* 点を消す */
+            padding-left: 0;  /* 左側の余白を消す */
         }
+
+        .container {
+            background: #ffe6f0;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
     </style>
 </head>
 <body>
     <h1>情報Ⅰ学習用App</h1>
     <ul>
-        <li><a href="/tryPassword/index.html">パスワードクラック「tryPassword」</a></li>
-        <li><a href="/colorMaster/index.html">色あてゲーム「colorMaster」</a></li>
-        <li><a href="/imageTransformer/index.html">イメージ変換「imageTransformer」</a></li>
-        <li><a href="/scoreEnc/index.html">暗号化シミュレータ「scoreEnc」</a></li>
+        <li class="container"><a href="/tryPassword/index.html">パスワードクラック「tryPassword」</a></li>
+        <li class="container"><a href="/colorMaster/index.html">色あてゲーム「colorMaster」</a></li>
+        <li class="container"><a href="/imageTransformer/index.html">イメージ変換「imageTransformer」</a></li>
+        <li class="container"><a href="/scoreEnc/index.html">暗号化シミュレータ「scoreEnc」</a></li>
     </ul>
 </body>
 </html>
