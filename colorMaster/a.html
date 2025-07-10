@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カラーコードマスター</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #2196F3; /* Blue */
+            --accent-color: #FFC107; /* Amber */
+            --background-color: #2c3e50; /* Dark Blue */
+            --text-color: #ecf0f1; /* Light Gray */
+            --panel-background: #34495e; /* Darker Blue */
+            --border-color: #7f8c8d; /* Gray */
+            --button-hover: #5cb85c;
+            --slider-track: #7f8c8d;
+            --slider-thumb: #ecf0f1;
+            --score-good: #28a745;
+            --score-medium: #ffc107;
+            --score-bad: #dc3545;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            background-color: var(--panel-background);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            border: 2px solid var(--border-color);
+        }
+
+        .panel {
+            background-color: var(--panel-background);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        .color-display {
+            height: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 3px dashed var(--accent-color);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2em;
+            color: var(--text-color);
+            text-shadow: 0 0 5px black;
+        }
+
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 12px;
+            border-radius: 6px;
+            background: var(--slider-track);
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+            margin-top: 5px;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .value-displays {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+        }
+
+        .value-displays span {
+            background-color: var(--background-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .color-code-display {
+            text-align: center;
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-screen {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .result-content {
+            background-color: var(--panel-background);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+            border: 2px solid var(--accent-color);
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-colors {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .result-color-box {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-color-display {
+            height: 100px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid var(--text-color);
+        }
+
+        .result-color-box p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .score-display {
+            font-size: 3em;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-color);
+            margin-top: 20px;
+            text-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
+        }
+
+        .score-message {
+            font-size: 1.5em;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+
+        .score-message.perfect { color: var(--score-good); }
+        .score-message.excellent { color: var(--score-good); }
+        .score-message.good { color: var(--score-medium); }
+        .score-message.decent { color: var(--score-bad); }
+        .score-message.poor { color: var(--score-bad); }
+
+        .next-question-btn {
+            background-color: var(--secondary-color);
+            margin-top: 20px;
+        }
+
+        .next-question-btn:hover {
+            background-color: #007bff; /* Darker blue */
+        }
+
+        .score-history {
+            background-color: var(--panel-background);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            border: 2px solid var(--border-color);
+        }
+
+        .score-history h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+
+        #scoreHistoryList {
+            list-style: none;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--background-color);
+        }
+
+        #scoreHistoryList li {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #scoreHistoryList li:last-child {
+            border-bottom: none;
+        }
+
+        #scoreHistoryList li span {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95em;
+        }
+
+        #scoreHistoryList li .score-value {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .history-color-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            margin-left: 10px;
+        }
+
+        .history-colors {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @media (max-width: 900px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            .result-colors {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            .game-container, .score-history, .result-content {
+                padding: 20px;
+            }
+            .color-display {
+                height: 150px;
+                font-size: 1.5em;
+            }
+            .btn {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            .result-content {
+                padding: 25px;
+            }
+            .score-display {
+                font-size: 2.5em;
+            }
+            .score-message {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 カラーコードマスター 🎯</h1>
+
+    <div class="game-container">
+        <div class="left-panel panel">
+            <h2>お題の色</h2>
+            <div id="targetColorDisplay" class="color-display"></div>
+            <p class="color-code-display" id="targetColorCode">#??????</p>
+        </div>
+
+        <div class="right-panel panel">
+            <h2>あなたの色</h2>
+            <div id="playerColorDisplay" class="color-display"></div>
+
+            <div class="slider-group">
+                <label for="redSlider">レッド (R)</label>
+                <input type="range" id="redSlider" min="0" max="255" value="128">
+                <div class="value-displays">
+                    <span id="redDecimal">128 (10進数)</span>
+                    <span id="redBinary">10000000 (2進数)</span>
+                    <span id="redHex">80 (16進数)</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label for="greenSlider">グリーン (G)</label>
+                <input type="range" id="greenSlider" min="0" max="255" value="128">
+                <div class="value-displays">
+                    <span id="greenDecimal">128 (10進数)</span>
+                    <span id="greenBinary">10000000 (2進数)</span>
+                    <span id="greenHex">80 (16進数)</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label for="blueSlider">ブルー (B)</label>
+                <input type="range" id="blueSlider" min="0" max="255" value="128">
+                <div class="value-displays">
+                    <span id="blueDecimal">128 (10進数)</span>
+                    <span id="blueBinary">10000000 (2進数)</span>
+                    <span id="blueHex">80 (16進数)</span>
+                </div>
+            </div>
+            <p class="color-code-display" id="playerColorCode">#808080</p>
+
+            <div class="button-container">
+                <button id="checkAnswerBtn" class="btn">決定！色を合わせる</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="score-history">
+        <h2>🌈 スコア履歴 (最新10件)</h2>
+        <ul id="scoreHistoryList">
+            <li>スコア履歴はありません。</li>
+        </ul>
+    </div>
+
+    <div id="resultScreen" class="result-screen">
+        <div class="result-content">
+            <h2>🎉 結果発表！ 🎉</h2>
+            <div class="result-colors">
+                <div class="result-color-box">
+                    <h3>あなたの回答</h3>
+                    <div id="resultPlayerColor" class="result-color-display"></div>
+                    <p>コード: <span id="resultPlayerCode"></span></p>
+                </div>
+                <div class="result-color-box">
+                    <h3>正解の色</h3>
+                    <div id="resultTargetColor" class="result-color-display"></div>
+                    <p>コード: <span id="resultTargetCode"></span></p>
+                </div>
+            </div>
+            <p class="score-message" id="scoreMessage"></p>
+            <p class="score-display" id="scoreValue">0</p>
+            <button id="nextQuestionBtn" class="btn next-question-btn">次の問題へ</button>
+        </div>
+    </div>
+
+    <script>
+        const targetColorDisplay = document.getElementById('targetColorDisplay');
+        const targetColorCode = document.getElementById('targetColorCode');
+        const playerColorDisplay = document.getElementById('playerColorDisplay');
+        const playerColorCode = document.getElementById('playerColorCode');
+
+        const redSlider = document.getElementById('redSlider');
+        const greenSlider = document.getElementById('greenSlider');
+        const blueSlider = document.getElementById('blueSlider');
+
+        const redDecimal = document.getElementById('redDecimal');
+        const redBinary = document.getElementById('redBinary');
+        const redHex = document.getElementById('redHex');
+
+        const greenDecimal = document.getElementById('greenDecimal');
+        const greenBinary = document.getElementById('greenBinary');
+        const greenHex = document.getElementById('greenHex');
+
+        const blueDecimal = document.getElementById('blueDecimal');
+        const blueBinary = document.getElementById('blueBinary');
+        const blueHex = document.getElementById('blueHex');
+
+        const checkAnswerBtn = document.getElementById('checkAnswerBtn');
+        const resultScreen = document.getElementById('resultScreen');
+        const resultPlayerColor = document.getElementById('resultPlayerColor');
+        const resultPlayerCode = document.getElementById('resultPlayerCode');
+        const resultTargetColor = document.getElementById('resultTargetColor');
+        const resultTargetCode = document.getElementById('resultTargetCode');
+        const scoreValue = document.getElementById('scoreValue');
+        const scoreMessage = document.getElementById('scoreMessage');
+        const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        const scoreHistoryList = document.getElementById('scoreHistoryList');
+
+        let targetRGB = {};
+        let scoreHistory = [];
+        const MAX_HISTORY_LENGTH = 10;
+
+        // Helper function to convert decimal to hex (2 digits)
+        function decToHex(dec) {
+            return dec.toString(16).padStart(2, '0').toUpperCase();
+        }
+
+        // Helper function to convert decimal to binary (8 digits)
+        function decToBin(dec) {
+            return dec.toString(2).padStart(8, '0');
+        }
+
+        // Update player color display and values
+        function updatePlayerColor() {
+            const r = parseInt(redSlider.value);
+            const g = parseInt(greenSlider.value);
+            const b = parseInt(blueSlider.value);
+
+            playerColorDisplay.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            playerColorCode.textContent = `#${decToHex(r)}${decToHex(g)}${decToHex(b)}`;
+
+            redDecimal.textContent = `${r} (10進数)`;
+            redBinary.textContent = `${decToBin(r)} (2進数)`;
+            redHex.textContent = `${decToHex(r)} (16進数)`;
+
+            greenDecimal.textContent = `${g} (10進数)`;
+            greenBinary.textContent = `${decToBin(g)} (2進数)`;
+            greenHex.textContent = `${decToHex(g)} (16進数)`;
+
+            blueDecimal.textContent = `${b} (10進数)`;
+            blueBinary.textContent = `${decToBin(b)} (2進数)`;
+            blueHex.textContent = `${decToHex(b)} (16進数)`;
+        }
+
+        // Generate a random target color
+        function generateTargetColor() {
+            targetRGB = {
+                r: Math.floor(Math.random() * 256),
+                g: Math.floor(Math.random() * 256),
+                b: Math.floor(Math.random() * 256)
+            };
+            targetColorDisplay.style.backgroundColor = `rgb(${targetRGB.r}, ${targetRGB.g}, ${targetRGB.b})`;
+            // 修正箇所: お題のカラーコードは隠す
+            targetColorCode.textContent = `#??????`;
+        }
+
+        // Calculate color difference (Euclidean distance in RGB space)
+        function getColorDifference(rgb1, rgb2) {
+            const dr = rgb1.r - rgb2.r;
+            const dg = rgb1.g - rgb2.g;
+            const db = rgb1.b - rgb2.b;
+            return Math.sqrt(dr * dr + dg * dg + db * db);
+        }
+
+        // Calculate score
+        function calculateScore() {
+            const playerRGB = {
+                r: parseInt(redSlider.value),
+                g: parseInt(greenSlider.value),
+                b: parseInt(blueSlider.value)
+            };
+
+            const maxDifference = getColorDifference({r: 0, g: 0, b: 0}, {r: 255, g: 255, b: 255}); // Max possible diff is ~441.67
+            const currentDifference = getColorDifference(targetRGB, playerRGB);
+
+            let score = Math.round(100 * Math.max(0, 1 - (currentDifference / maxDifference) ** 0.8));
+
+            if (currentDifference < 10) { // Very close match
+                score = Math.min(100, score + 10);
+            }
+            if (currentDifference === 0) { // Perfect match
+                score = 100;
+            }
+
+            return score;
+        }
+
+        // Display results
+        function showResults() {
+            const playerRGB = {
+                r: parseInt(redSlider.value),
+                g: parseInt(greenSlider.value),
+                b: parseInt(blueSlider.value)
+            };
+
+            resultPlayerColor.style.backgroundColor = `rgb(${playerRGB.r}, ${playerRGB.g}, ${playerRGB.b})`;
+            resultPlayerCode.textContent = `#${decToHex(playerRGB.r)}${decToHex(playerRGB.g)}${decToHex(playerRGB.b)}`;
+
+            resultTargetColor.style.backgroundColor = `rgb(${targetRGB.r}, ${targetRGB.g}, ${targetRGB.b})`;
+            resultTargetCode.textContent = `#${decToHex(targetRGB.r)}${decToHex(targetRGB.g)}${decToHex(targetRGB.b)}`;
+
+            const score = calculateScore();
+            scoreValue.textContent = score;
+
+            let message = "";
+            scoreMessage.className = 'score-message'; // Reset class
+            if (score === 100) {
+                message = "🎉 完璧！素晴らしいカラーセンス！ 🎉";
+                scoreMessage.classList.add('perfect');
+            } else if (score >= 90) {
+                message = "✨ 惜しい！ほぼ完璧な色合いです！ ✨";
+                scoreMessage.classList.add('excellent');
+            } else if (score >= 70) {
+                message = "👍 なかなか良い調和です！ 👍";
+                scoreMessage.classList.add('good');
+            } else if (score >= 50) {
+                message = "🤔 もう一息！調整次第で良くなります。 🤔";
+                scoreMessage.classList.add('decent');
+            } else {
+                message = "💦 がんばろう！色の仕組みをもっと学ぼう！ 💦";
+                scoreMessage.classList.add('poor');
+            }
+            scoreMessage.textContent = message;
+
+            recordScore(score, resultTargetCode.textContent, resultPlayerCode.textContent);
+            resultScreen.style.display = 'flex';
+        }
+
+        // Record score history
+        function recordScore(score, targetCode, playerCode) {
+            scoreHistory.unshift({ score, targetCode, playerCode }); // Add to beginning
+            if (scoreHistory.length > MAX_HISTORY_LENGTH) {
+                scoreHistory.pop(); // Remove oldest
+            }
+            updateScoreHistoryDisplay();
+        }
+
+        // Update score history display
+        function updateScoreHistoryDisplay() {
+            scoreHistoryList.innerHTML = ''; // Clear current list
+            if (scoreHistory.length === 0) {
+                scoreHistoryList.innerHTML = '<li>スコア履歴はありません。</li>';
+                return;
+            }
+            scoreHistory.forEach((item, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span>${index + 1}回目: <span class="score-value">${item.score}点</span></span>
+                    <div class="history-colors">
+                        <span style="font-size: 0.8em;">お題: ${item.targetCode}</span>
+                        <div class="history-color-box" style="background-color: ${item.targetCode};"></div>
+                        <span style="font-size: 0.8em;">回答: ${item.playerCode}</span>
+                        <div class="history-color-box" style="background-color: ${item.playerCode};"></div>
+                    </div>
+                `;
+                scoreHistoryList.appendChild(listItem);
+            });
+        }
+
+        // Event Listeners
+        redSlider.addEventListener('input', updatePlayerColor);
+        greenSlider.addEventListener('input', updatePlayerColor);
+        blueSlider.addEventListener('input', updatePlayerColor);
+        checkAnswerBtn.addEventListener('click', showResults);
+        nextQuestionBtn.addEventListener('click', () => {
+            resultScreen.style.display = 'none';
+            generateTargetColor();
+            // Reset sliders to a neutral value or random for next round?
+            // For learning, maybe reset to a neutral value to encourage starting fresh.
+            redSlider.value = 128;
+            greenSlider.value = 128;
+            blueSlider.value = 128;
+            updatePlayerColor(); // Update display for new slider values
+        });
+
+        // Initial setup
+        generateTargetColor();
+        updatePlayerColor(); // Set initial player color and values
+        updateScoreHistoryDisplay(); // Initialize score history display
+    </script>
+</body>
+</html>
