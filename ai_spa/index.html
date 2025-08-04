@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育現場における生成AI活用インタラクティブガイド</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A dashboard-style single-page application. The structure is designed for non-linear exploration. It starts with a high-level "Benefits vs. Risks" visualization to immediately engage the user. The core content is organized into three user-selectable thematic sections: "School Admin DX," "Lesson Prep," and "In-Class Use." This is more intuitive than the report's linear chapters. Each section presents concrete case studies as interactive cards. A dedicated, easily accessible "Risks & Guidelines" section uses an accordion for scannability. This structure allows users to quickly grasp the key concepts, dive into areas of interest, and reference critical information without being forced through a long document, thus maximizing usability and comprehension. -->
+    <!-- Visualization & Content Choices: 1. Benefits vs. Risks: Goal=Compare, Viz=Interactive Doughnut Chart (Chart.js), Interaction=Hover to reveal details. Justification=Provides an immediate, engaging visual summary of the core tension. 2. Use Cases: Goal=Organize, Method=Tabbed interface with interactive cards (HTML/Tailwind/JS). Interaction=Click card to see details. Justification=Manages dense text examples in a clean, user-driven way. 3. Risks & Guidelines: Goal=Inform, Method=Accordion (HTML/Tailwind/JS). Interaction=Click to expand. Justification=Makes detailed but crucial information highly scannable and accessible on demand. 4. Teacher-AI Collab Flow: Goal=Organize, Method=Diagram using HTML/Tailwind. Justification=Visually explains a key concept without images or complex libraries, adhering to constraints. All choices prioritize interactivity and clarity over static text. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #FDFBF8;
+            color: #333;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover {
+            color: #D97706;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #D97706;
+            transition: width 0.3s ease;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #F59E0B;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .case-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .case-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .accordion-header {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .accordion-header:hover {
+            background-color: #FEF3C7;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-gray-800">
+                <span class="text-amber-600">AI</span><span class="text-gray-600">活用</span><span class="text-sm">ガイド</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="nav-link active">ホーム</a>
+                <a href="#use-cases" class="nav-link">活用事例</a>
+                <a href="#risks" class="nav-link">リスクと指針</a>
+                <a href="#future" class="nav-link">未来の展望</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-4 6h16"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#home" class="block py-2 text-gray-700 nav-link-mobile">ホーム</a>
+            <a href="#use-cases" class="block py-2 text-gray-700 nav-link-mobile">活用事例</a>
+            <a href="#risks" class="block py-2 text-gray-700 nav-link-mobile">リスクと指針</a>
+            <a href="#future" class="block py-2 text-gray-700 nav-link-mobile">未来の展望</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="home" class="py-16 md:py-24">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-3xl md:text-5xl font-bold text-gray-800 mb-4">教育現場の生成AI活用</h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-12">教員の業務負担軽減から、個別最適化された学びの実現まで。生成AIが拓く、新しい教育の可能性を探ります。</p>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-bold text-gray-700 mb-6">メリット vs リスク：生成AI活用の両側面</h2>
+                    <p class="text-gray-600 mb-8">生成AIは大きな可能性を秘めていますが、同時に慎重な対応が求められるリスクも存在します。下のグラフの各項目にカーソルを合わせると、詳細が表示されます。</p>
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="w-full md:w-1/2">
+                           <div class="chart-container">
+                                <canvas id="benefitsRisksChart"></canvas>
+                           </div>
+                        </div>
+                        <div id="chart-details" class="w-full md:w-1/2 text-left p-6 bg-amber-50 rounded-xl min-h-[300px] flex flex-col justify-center">
+                            <h3 id="details-title" class="text-xl font-bold text-amber-800 mb-3">グラフにカーソルを合わせてください</h3>
+                            <p id="details-text" class="text-gray-700">教育現場における生成AIの利点と課題について、バランスの取れた視点を持つことが重要です。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="use-cases" class="py-16 md:py-24 bg-amber-50/50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">生成AI活用事例</h2>
+                <p class="text-lg text-gray-600 text-center max-w-3xl mx-auto mb-12">「校務DX」「授業準備」「授業活用」の3つのシーン別に、全国の学校で実践されている具体的な活用事例を紹介します。タブをクリックして切り替え、カードを選択すると詳細が表示されます。</p>
+                
+                <div class="flex justify-center mb-8 space-x-2 md:space-x-4">
+                    <button class="tab-button px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold bg-white shadow-sm active" data-tab="admin">校務DX</button>
+                    <button class="tab-button px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold bg-white shadow-sm" data-tab="prep">授業準備</button>
+                    <button class="tab-button px-4 py-2 md:px-6 md:py-3 rounded-full font-semibold bg-white shadow-sm" data-tab="class">授業活用</button>
+                </div>
+
+                <div id="tab-content">
+                </div>
+            </div>
+        </section>
+
+        <section id="risks" class="py-16 md:py-24">
+            <div class="container mx-auto px-6 max-w-4xl">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">リスクと公的ガイドライン</h2>
+                <p class="text-lg text-gray-600 text-center max-w-3xl mx-auto mb-12">生成AIの安全な活用には、潜在的リスクへの理解と対策が不可欠です。文部科学省のガイドラインに基づき、主要な課題と対応策をまとめました。</p>
+                
+                <div id="accordion-container" class="space-y-4">
+                </div>
+            </div>
+        </section>
+
+        <section id="future" class="py-16 md:py-24 bg-gray-900 text-white">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">未来の展望：AIと共創する教育</h2>
+                <p class="text-lg text-gray-300 max-w-3xl mx-auto mb-12">生成AIは教師を代替するのではなく、その能力を拡張するパートナーです。AIと教師が協働することで、より質の高い、持続可能な教育の未来が拓かれます。</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-xl">
+                        <h3 class="text-xl font-bold text-amber-400 mb-3">教育の質的転換</h3>
+                        <p class="text-gray-400">AIによる個別最適化された学習支援が深化し、生徒一人ひとりの潜在能力を最大限に引き出す教育が実現します。</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl">
+                        <h3 class="text-xl font-bold text-amber-400 mb-3">教師の役割の変化</h3>
+                        <p class="text-gray-400">AIを使いこなし、生徒の思考力や創造性を引き出すファシリテーターとしての役割が、より重要になります。</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl">
+                        <h3 class="text-xl font-bold text-amber-400 mb-3">教育格差の是正</h3>
+                        <p class="text-gray-400">地域や環境に左右されず、全ての生徒に質の高い教育コンテンツへのアクセスを提供し、格差是正に貢献します。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 教育現場における生成AI活用インタラクティブガイド</p>
+            <p class="text-sm text-gray-400 mt-2">このアプリケーションは提供されたレポートに基づき、情報探索のために生成されました。</p>
+        </div>
+    </footer>
+    
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-8 relative">
+            <button id="modal-close" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4"></h3>
+            <p id="modal-school" class="text-md font-semibold text-amber-600 mb-4"></p>
+            <div id="modal-body" class="text-gray-700 space-y-4"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const appData = {
+            chartData: {
+                benefits: [
+                    { label: '個別最適化された学習', detail: '生徒一人ひとりのレベルや興味に合わせた教材を提供し、学習効率を最大化します。' },
+                    { label: '教員の業務負担軽減', detail: 'テスト作成や報告書の下書きなどを自動化し、教員がより本質的な業務に集中できる時間を創出します。' },
+                    { label: '思考力・創造性の促進', detail: 'ブレインストーミングの相手となり、新たな視点を提供することで、生徒の思考を深めます。' },
+                    { label: '教育の質向上と格差是正', detail: 'データ分析による教育改善や、遠隔教育の支援を通じて、教育格差の解消に貢献します。' }
+                ],
+                risks: [
+                    { label: 'ハルシネーション（誤情報）', detail: 'AIが事実と異なる情報を生成する可能性があり、誤った知識の習得に繋がるリスクがあります。' },
+                    { label: '思考力・主体性の低下', detail: 'AIの答えに依存しすぎると、自ら考える力や問題解決能力が低下する懸念があります。' },
+                    { label: '情報セキュリティ・プライバシー', detail: '個人情報を含むデータを入力した場合、情報漏洩のリスクが存在します。' },
+                    { label: '著作権侵害', detail: 'AIが既存の著作物に酷似したコンテンツを生成し、意図せず著作権を侵害する可能性があります。' },
+                    { label: '公平性・バイアス', detail: '学習データに含まれる偏見がAIの出力に反映され、不公平な結果を生む可能性があります。' }
+                ]
+            },
+            useCases: {
+                admin: [
+                    { id: 'admin1', title: '報告書・通知文の作成支援', school: '大阪市立天王寺中学校', summary: '保護者向け案内文や姉妹校へのメッセージカード作成にAIを活用し、文書作成時間を大幅に短縮。', detail: '学校行事の案内文、英語の小テスト、国際交流の一環であるメッセージカードなど、多様な文書作成業務に生成AIを導入。これにより、教員は定型的な作業から解放され、生徒指導や教材研究といった、より専門性が求められる業務に時間を割くことが可能になりました。' },
+                    { id: 'admin2', title: 'アンケート回答の分析', school: '出川小学校', summary: '研究授業後のアンケート回答をAIで分析・要約。分析時間を数日から1日に短縮し、迅速な振り返りを実現。', detail: '従来、手作業で行っていたアンケートの自由記述欄の分析を生成AIに任せることで、キーワード抽出や傾向の要約が瞬時に完了。これにより、研修の翌日にはフィードバックが可能となり、PDCAサイクルを高速化。研修効果の向上と、アンケート実施回数の増加にも繋がりました。' },
+                    { id: 'admin3', title: '研修企画・授業計画の作成', school: '高森台中学校', summary: 'AIとの対話を通じて研修企画や授業計画のアイデアを得る。プロンプトの工夫でより質の高い提案を引き出す。', detail: '「研修担当者として、若手教員向けのICT活用研修を企画してください」といった具体的なプロンプトを用いることで、AIから体系的で実用的な研修案を得ることに成功。対話を繰り返すことで、アイデアをさらに洗練させ、質の高い計画を作成しています。' },
+                    { id: 'admin4', title: '校務支援AIサービスの導入', school: '横須賀市、山口県など', summary: '市や県単位で校務支援に特化した生成AIサービスを導入し、全教職員の業務効率化を体系的に推進。', detail: '横須賀市では全市立学校の教職員に、山口県では全公立中学校の生徒・教員に生成AIサービスを導入。これにより、個々の教員の努力に頼るのではなく、自治体全体として教員の働き方改革と教育DXを推進する体制を構築しています。' }
+                ],
+                prep: [
+                    { id: 'prep1', title: 'テスト問題の自動作成', school: '岩沼市立岩沼北中学校', summary: '定期考査の問題作成にAIを活用。問題のたたき台を素早く生成し、教員の負担を軽減。', detail: '特定の学習単元と目標レベルを指定するだけで、AIが多肢選択問題、記述問題、応用問題など多様な形式のテスト問題案を生成。教員は生成された問題を基に、生徒の理解度に合わせて内容を調整・修正するだけで済み、問題作成の質を維持しつつ、時間を大幅に節約しています。' },
+                    { id: 'prep2', title: '個別最適化された教材作成', school: '多数の学校で実践', summary: '生徒一人ひとりの弱点や学習進捗に合わせた練習問題や補助教材をAIが自動生成。', detail: 'AIが学習ログを分析し、「この生徒は分数の割り算が苦手」と判断した場合、その生徒専用の復習プリントを自動で作成。教員はクラス全体の進度を管理しながら、個々の生徒に最適なサポートを効率的に提供できます。' },
+                    { id: 'prep3', title: '授業内容の多様化支援', school: 'みどりの学園義務教育学校', summary: '歴史の時代背景や美術の着色アイデアなど、AIに質問することで授業内容の幅を広げる。', detail: '「安土桃山時代の城下町の様子を庶民の視点で描写して」といった問いをAIに投げかけることで、教科書だけでは得られない多角的な情報を入手。これにより、生徒の興味を引き出し、より深くて豊かな学びを提供しています。' },
+                    { id: 'prep4', title: '道徳の授業での多角的視点', school: 'みどりの学園義務教育学校', summary: '道徳の授業で扱うテーマについてAIの意見を参考にし、議論を深める材料として活用。', detail: '例えば「友情とは何か」というテーマに対し、AIに哲学的な観点、心理学的な観点など複数の立場から意見を生成させる。AIが提示する客観的で多様な視点は、生徒が自らの考えを相対化し、多角的に物事を捉えるきっかけとなります。' }
+                ],
+                class: [
+                    { id: 'class1', title: '俳句の創作と批判的評価', school: '札幌市立中央小学校', summary: 'AIが作成した俳句の問題点を児童に発見させ、改善案を考えさせることで、創造性と批判的思考を育成。', detail: 'AIが生成した「夏の海 キラキラ光る 太陽だ」という俳句を提示。児童は「季語が二つある」という問題点に気づき、「夏の海 キラキラ光る 波の上」のように修正案を考案。AIを完璧な存在としてではなく、あくまでツールとして批判的に捉える姿勢を養います。' },
+                    { id: 'class2', title: '英作文の添削と表現力向上', school: '岩沼市立岩沼北中学校', summary: '生徒が作成した英作文をAIが添削し、より自然な表現を提案。スピーキング練習にも活用。', detail: '生徒はAIからリアルタイムでフィードバックを受けられるため、間違いを恐れずに何度も挑戦できます。AIとの対話を通じて発音練習も行うことで、英語を話すことへの心理的ハードルを下げ、主体的な学習態度を育みます。' },
+                    { id: 'class3', title: 'プログラミング指導の補助', school: '岩沼市立岩沼北中学校', summary: 'Pythonでのアプリ作成時、AIにコード生成を補助させ、生徒はプロンプトの工夫とコードの理解に集中。', detail: '生徒が「タイマーアプリの基本的なコードを書いて」と指示すると、AIがコードを生成。生徒はそのコードを読み解き、自分のアプリに組み込み、改造する。高度なプログラミングをAIの支援を受けながら学ぶことで、学習意欲と達成感が高まります。' },
+                    { id: 'class4', title: '探究学習のアイデア出し', school: '九段中等教育学校', summary: 'Webサイト制作の授業で、テーマのアイデア出しから文章・画像生成までAIを活用。「自分達では出ないアイデアが得られた」と高評価。', detail: '「地域の魅力を発信するサイト」というテーマで、AIに「どんな切り口が考えられる？」と質問。AIが「歴史」「食文化」「自然」などの視点を提案し、さらに各テーマの具体的なコンテンツ案も生成。生徒の創造的な活動を強力にサポートします。' },
+                    { id: 'class5', title: '「走れメロス」チャットボット', school: 'みどりの学園義務教育学校', summary: 'メロスの性格を学習したAIチャットボットと対話し、自身の作品解釈と比較・分析することで、深い読解を促す。', detail: '生徒が「なぜ友を信じられたのですか？」と質問すると、AIボットがメロスの立場から回答。生徒は自分の考えとAIの回答を比較し、「AIは原作のこの部分を根拠にしているな」と分析。正解を探すのではなく、多様な解釈を共有し思考を深める授業へと転換しました。' }
+                ]
+            },
+            risksAndGuidelines: [
+                { title: 'ハルシネーション（誤情報生成）', content: '生成AIは事実と異なる情報を生成することがあります。AIの出力を鵜呑みにせず、必ず複数の信頼できる情報源で真偽を確認する「ファクトチェック」の習慣を生徒に指導することが極めて重要です。' },
+                { title: '思考力・主体性の低下', content: 'AIを安易な答え探しのツールとして使うと、自ら考える力が育ちません。AIを「思考の壁打ち相手」や「新たな視点を得るための道具」として位置づけ、生徒が主体的に課題解決に取り組む授業設計が求められます。' },
+                { title: '情報セキュリティ・プライバシー保護', content: '生徒の氏名、成績、住所といった個人情報や、学校の機密情報をプロンプトに入力してはいけません。文部科学省のガイドラインを遵守し、個人情報を機械学習に利用しないと明記された、教育機関向けの安全なサービスを選定する必要があります。' },
+                { title: '著作権侵害', content: 'AIが生成した文章や画像が、意図せず既存の著作物と酷似し、著作権を侵害するリスクがあります。生成物をそのまま利用するのではなく、あくまで参考情報やアイデアの源として活用し、最終的な成果物は生徒自身の言葉や表現で作成するよう指導することが重要です。' },
+                { title: '公平性とバイアス', content: 'AIの学習データには、社会的な偏見や固定観念が含まれている可能性があります。AIの出力が特定の文化や価値観に偏っていないか、常に批判的な視点で評価し、多様な意見を尊重する態度を育む教育が不可欠です。' },
+                { title: '責任の所在', content: 'AIの利用によって問題が発生した場合の責任は、最終的にAIを利用した人間（教員や生徒）にあります。AIはあくまで道具であり、その利用結果に対する判断と責任は人間が負うという原則を、生徒にも明確に伝える必要があります。' }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const benefitsRisksCtx = document.getElementById('benefitsRisksChart').getContext('2d');
+            const chartDetailsTitle = document.getElementById('details-title');
+            const chartDetailsText = document.getElementById('details-text');
+            
+            const chartData = {
+                labels: [...appData.chartData.benefits.map(b => b.label), ...appData.chartData.risks.map(r => r.label)],
+                datasets: [{
+                    data: [appData.chartData.benefits.length, appData.chartData.risks.length],
+                    backgroundColor: ['#F59E0B', '#4B5563'],
+                    borderColor: '#FDFBF8',
+                    borderWidth: 4,
+                    hoverOffset: 8,
+                }]
+            };
+
+            const benefitsRisksChart = new Chart(benefitsRisksCtx, {
+                type: 'doughnut',
+                data: {
+                     labels: ['メリット', 'リスク'],
+                     datasets: chartData.datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: "'Noto Sans JP', sans-serif"
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        const canvas = event.native.target;
+                        if (chartElement.length) {
+                            canvas.style.cursor = 'pointer';
+                            const index = chartElement[0].index;
+                            const datasetIndex = chartElement[0].datasetIndex;
+                            const isBenefit = index === 0;
+                            const dataToShow = isBenefit ? appData.chartData.benefits : appData.chartData.risks;
+                            
+                            let totalIndex = 0;
+                            const segmentAngle = 2 * Math.PI / (appData.chartData.benefits.length + appData.chartData.risks.length);
+                            const angle = benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle + (benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.endAngle - benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle) / 2;
+
+                            let currentAngle = benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle;
+                            
+                            let specificIndex;
+                            if (isBenefit) {
+                                specificIndex = Math.floor((angle - benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle) / ( (benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.endAngle - benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle) / appData.chartData.benefits.length));
+                                chartDetailsTitle.textContent = dataToShow[specificIndex].label;
+                                chartDetailsText.textContent = dataToShow[specificIndex].detail;
+                            } else {
+                                specificIndex = Math.floor((angle - benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle) / ( (benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.endAngle - benefitsRisksChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)[0].element.startAngle) / appData.chartData.risks.length));
+                                chartDetailsTitle.textContent = dataToShow[specificIndex].label;
+                                chartDetailsText.textContent = dataToShow[specificIndex].detail;
+                            }
+
+                        } else {
+                            canvas.style.cursor = 'default';
+                            chartDetailsTitle.textContent = 'グラフにカーソルを合わせてください';
+                            chartDetailsText.textContent = '教育現場における生成AIの利点と課題について、バランスの取れた視点を持つことが重要です。';
+                        }
+                    }
+                }
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContentContainer = document.getElementById('tab-content');
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalClose = document.getElementById('modal-close');
+            const modalTitle = document.getElementById('modal-title');
+            const modalSchool = document.getElementById('modal-school');
+            const modalBody = document.getElementById('modal-body');
+
+            function renderTabContent(tabName) {
+                const cases = appData.useCases[tabName];
+                tabContentContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        ${cases.map(c => `
+                            <div class="case-card bg-white rounded-xl shadow-md overflow-hidden p-6 flex flex-col" data-id="${c.id}" data-category="${tabName}">
+                                <h4 class="text-lg font-bold text-gray-800 mb-2">${c.title}</h4>
+                                <p class="text-amber-700 font-semibold text-sm mb-3">${c.school}</p>
+                                <p class="text-gray-600 text-sm flex-grow">${c.summary}</p>
+                                <div class="text-right mt-4 text-sm font-semibold text-amber-600 hover:text-amber-800">詳細を見る &rarr;</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                addCardListeners();
+            }
+
+            function addCardListeners() {
+                document.querySelectorAll('.case-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const caseId = card.dataset.id;
+                        const category = card.dataset.category;
+                        const caseData = appData.useCases[category].find(c => c.id === caseId);
+                        
+                        modalTitle.textContent = caseData.title;
+                        modalSchool.textContent = caseData.school;
+                        modalBody.innerHTML = `<p>${caseData.detail.replace(/\n/g, '</p><p>')}</p>`;
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    });
+                });
+            }
+
+            modalClose.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderTabContent(button.dataset.tab);
+                });
+            });
+
+            renderTabContent('admin');
+
+            const accordionContainer = document.getElementById('accordion-container');
+            accordionContainer.innerHTML = appData.risksAndGuidelines.map((item, index) => `
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="accordion-header flex justify-between items-center p-4 md:p-5">
+                        <h3 class="text-lg font-semibold text-gray-800">${item.title}</h3>
+                        <svg class="w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content px-4 md:px-5">
+                        <p class="text-gray-600 pb-4">${item.content}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('svg');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        content.style.paddingTop = null;
+                        content.style.paddingBottom = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(c => {
+                            c.style.maxHeight = null;
+                            c.style.paddingTop = null;
+                            c.style.paddingBottom = null;
+                            c.previousElementSibling.querySelector('svg').style.transform = 'rotate(0deg)';
+                        });
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        content.style.paddingBottom = '1rem';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
