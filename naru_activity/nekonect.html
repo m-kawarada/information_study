@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐈 Nekonect in 奈留 - 島ネコと人が繋がるプロジェクト</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 基本設定 */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fcf4d9; /* 薄いクリームイエローの背景 */
+            color: #3e2723; /* 濃い茶色 */
+            line-height: 1.6;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: #ffb74d; /* 鮮やかなオレンジイエロー */
+            color: #3e2723;
+            padding: 40px 0;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 8px dashed #81c784; /* ミントグリーンの点線 */
+        }
+
+        header::before {
+            content: '🐾';
+            position: absolute;
+            top: 5px;
+            left: 5%;
+            font-size: 80px;
+            color: rgba(62, 39, 35, 0.1);
+            transform: rotate(-20deg);
+        }
+
+        header h1 {
+            font-family: 'Mochiy Pop P One', sans-serif;
+            font-size: 3em;
+            margin: 0;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px #fff9c4; /* 白い影でポップに */
+            color: #d84315; /* 濃いオレンジ */
+        }
+
+        header h2 {
+            font-size: 1.4em;
+            margin: 10px 0 20px;
+            color: #3e2723;
+        }
+
+        .main-visual img {
+            max-width: 90%;
+            border-radius: 50%; /* 丸い形で可愛いネコに注目 */
+            border: 6px solid #4db6ac; /* ミントグリーンの枠 */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            margin-top: 20px;
+        }
+
+        /* セクション共通スタイル */
+        section {
+            background-color: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            margin: 30px auto;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #ffd54f; /* 明るいイエローの枠 */
+            text-align: left;
+            position: relative;
+        }
+
+        section h3 {
+            font-family: 'Mochiy Pop P One', sans-serif;
+            font-size: 2.2em;
+            color: #4db6ac; /* メインカラーのミントグリーン */
+            border-bottom: 5px solid #ffb74d; /* オレンジイエローのライン */
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        section p {
+            font-size: 1.05em;
+            margin-bottom: 1.5em;
+            color: #5d4037;
+            text-align: justify;
+        }
+
+        /* リスト（アイデア） */
+        .idea-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .idea-list li {
+            background-color: #e0f2f1; /* 淡いミントグリーン */
+            border: 3px solid #4db6ac;
+            padding: 20px;
+            border-radius: 15px;
+            width: calc(33.3% - 20px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .idea-list li:hover {
+            transform: translateY(-5px);
+            background-color: #b2dfdb;
+        }
+
+        .idea-list h4 {
+            color: #004d40;
+            font-size: 1.2em;
+            border-bottom: 2px dashed #ffb74d;
+            padding-bottom: 5px;
+        }
+
+        /* 引用ボックス（発見・感想） */
+        .quote-box {
+            background-color: #fff9c4; /* クリームイエロー */
+            border-left: 10px solid #ffb74d; /* オレンジイエローの太線 */
+            padding: 20px 30px;
+            margin: 30px 0;
+            border-radius: 12px;
+            font-style: italic;
+            color: #795548;
+            font-size: 1.1em;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .quote-box::before {
+            content: '💬';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            font-size: 2.5em;
+            opacity: 0.8;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .image-gallery img {
+            width: calc(33% - 20px);
+            border-radius: 10px;
+            border: 4px solid #fff9c4;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* アクションボタン */
+        .action-button {
+            display: inline-block;
+            background-color: #ff8a65; /* コーラルオレンジ */
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 6px #bf360c;
+            transition: all 0.1s;
+            margin-top: 30px;
+            font-size: 1.2em;
+        }
+
+        .action-button:hover {
+            background-color: #ff7043;
+            transform: translateY(-2px);
+            box-shadow: 0 8px #bf360c;
+        }
+
+        .action-button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 #bf360c;
+        }
+
+        .back-button {
+            background-color: #4db6ac; /* ミントグリーン */
+            box-shadow: 0 6px #00897b;
+        }
+        .back-button:hover {
+            background-color: #26a69a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px #00897b;
+        }
+        .back-button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 #00897b;
+        }
+
+        /* フッター */
+        footer {
+            background-color: #ffb74d;
+            color: #3e2723;
+            padding: 20px 0;
+            margin-top: 50px;
+            font-size: 1em;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.2em; }
+            section h3 { font-size: 1.8em; }
+            .idea-list { flex-direction: column; }
+            .idea-list li { width: 100%; }
+            .image-gallery img { width: calc(48% - 10px); }
+        }
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.8em; }
+            .image-gallery img { width: 95%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>🐈 奈留島を、もっとHappyに！島ネコと人が繋がるプロジェクト ✨</h1>
+            <h2>Nekonect in 奈留 (ネコネクト) 〜 ネコと地域のハッピー共生プラン 〜</h2>
+            <div class="main-visual">
+                <img src="https://via.placeholder.com/600x600/b2dfdb/004d40?text=奈留島の可愛い島ネコの写真" alt="奈留島の島ネコプロジェクトのメインビジュアル">
+                <p style="color: #3e2723; margin-top: 15px; font-weight: bold;">ネコと観光、そして地域共生を繋ぐ高校生発のプロジェクト！</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <section id="section1">
+            <h3 data-icon="🔍"><span>🐱 奈留島ネコの「今」を知る</span></h3>
+            <p>観光客に愛される島ネコたちですが、島民の生活においては「フン害」「鳴き声」といった課題も存在します。私たちはまず、この**「ネコ問題」**を可愛いという側面だけでなく、地域課題として深く調査することから始めました。</p>
+            <ul>
+                <li>**地域住民へのアンケート**を実施し、猫への愛情と困りごとの両方を把握。</li>
+                <li>**TNR活動（不妊去勢手術）**の現状を学び、適正管理の重要性を認識。</li>
+                <li>観光客へのヒアリングを通じ、ネコとの触れ合い方に関する課題を発見。</li>
+            </ul>
+            <div class="quote-box">
+                「地域の方々がネコを好きな一方で、問題も抱えているという複雑な現状を知り、観光と共生のバランスが取れた解決策が必要だと強く感じました。」
+            </div>
+        </section>
+
+        <section id="section2">
+            <h3 data-icon="💡"><span>💡 ネコが観光資源に！「ネコネクト」のアイデア</span></h3>
+            <p>課題解決と地域活性化を両立するため、私たちは「ネコネクト（Neko + Connect）」を立ち上げました。このプロジェクトは、情報発信、商品開発、マナー啓発の3つの柱で構成されています。</p>
+            <ul class="idea-list">
+                <li>
+                    <h4>① ネコマップの作成 🗺️</h4>
+                    <p>島内のネコスポット、TNR済みのネコの紹介（名前、性格）などをまとめた、可愛くて親切なマップをデザイン！</p>
+                </li>
+                <li>
+                    <h4>② ネコグッズの開発 🎁</h4>
+                    <p>奈留の特産品やモチーフを使ったオリジナルネコグッズを企画。収益はTNR活動に寄付する仕組みを提案しました。</p>
+                </li>
+                <li>
+                    <h4>③ 正しい触れ合い方啓発 🤝</h4>
+                    <p>観光客向けに「エサをあげすぎない」「優しく見守る」といったマナーをポップに伝えるポスターや動画を制作。</p>
+                </li>
+            </ul>
+        </section>
+
+        <section id="section3">
+            <h3 data-icon="🚀"><span>🐾 実際に動く！ネコネクト活動レポート</span></h3>
+            <p>机上の計画だけでなく、私たちはアイデアを形にして地域に展開しました。その結果、観光客や地域の方々から大きな反響をいただくことができました。</p>
+            <div class="image-gallery">
+                <img src="https://via.placeholder.com/300x200/c8e6c9/4caf50?text=ネコマップを配布する様子" alt="ネコマップを配布する様子">
+                <img src="https://via.placeholder.com/300x200/ffe0b2/ff9800?text=オリジナルグッズ試作品の展示" alt="オリジナルグッズ試作品の展示">
+                <img src="https://via.placeholder.com/300x200/ffcdd2/d32f2f?text=ポスターを掲示する生徒" alt="ポスターを掲示する生徒">
+            </div>
+            <div class="quote-box">
+                「販売会では、特にネコグッズが飛ぶように売れて驚きました！『奈留を応援したい』という気持ちが伝わってきて、私たちも感激しました。収益でTNR活動に貢献できるのが嬉しいです！」
+            </div>
+            <p>この活動を通して、地域課題も「楽しい」に変えることができるという確信を得ました。</p>
+        </section>
+
+        <section id="section4">
+            <h3 data-icon="🌟"><span>✨ 奈留島は、ネコと人が共生する島へ</span></h3>
+            <p>「ネコネクト」の活動は、地域課題の解決だけでなく、私たち高校生に「計画力」「デザイン力」「実行力」といった多くのスキルを与えてくれました。ご協力いただいた地域の皆様、観光客の皆様に心より感謝申し上げます。</p>
+            <p>今後は、ネコグッズの本格的な商品化と観光協会との連携を目指し、奈留島が本当にネコと人が笑顔で共生できる島となるよう、活動を継続していきます！</p>
+            <a href="index.html" class="back-button action-button">🏠 まとめサイトトップに戻る</a>
+        </section>
+
+    </div>
+
+    <footer>
+        &copy; 2025 奈留高校 総合的な探究の時間「奈留実践」 | 🐈 Nekonect in 奈留 チーム
+    </footer>
+
+</body>
+</html>
