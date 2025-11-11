@@ -3,49 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>情報Ⅰ学習用Appサンプルサイト</title>
+    <title>情報Ⅰ学習用App - ポップなサンプルサイト</title>
+    <!-- Tailwind CSSの読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #ff99cc;
-            margin: 10px;
+        /* Interフォントを適用 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        :root {
+            font-family: 'Inter', sans-serif;
         }
-        h1 {
-            color: #cc0066;
-        }
-        ul {
-            list-style: none; /* 点を消す */
-            padding-left: 0;  /* 左側の余白を消す */
-        }
-
-        .container {
-            color:white;
-            background: #ff6699;
-            padding: 10px ;
-            border-radius: 20px;
-            margin:20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    a:link {
-        text-decoration: none;
-    }
-
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'custom-pink': '#FF69B4', /* ホットピンク */
+                        'custom-blue': '#40BFFF', /* スカイブルー */
+                        'custom-yellow': '#FFD700', /* ゴールド */
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <h1>情報Ⅰ学習用App</h1>
-    <ul>
-        <li class="container"><a href="./tryPassword/index.html">パスワードクラック「tryPassword」</a></li>
-        <li class="container"><a href="./colorMaster/index.html">色あてゲーム「colorMaster」</a></li>
-        <li class="container"><a href="./imageTransformer/index.html">イメージ変換「imageTransformer」</a></li>
-        <li class="container"><a href="./scoreEnc/index.html">暗号化シミュレータ「scoreEnc」</a></li>
-        <li class="container"><a href="./ai_spa/index.html">2025.08.生成AIレポート「GenerativeAI」</a></li>
-        <li class="container"><a href="./naru_activity/index.html">2025奈留実践ポスターセッションまとめサイト</a></li>
-    </ul>
+<!-- 背景は淡いイエローで明るく、全体を中央に配置 -->
+<body class="min-h-screen bg-yellow-50 flex flex-col items-center p-4 sm:p-8">
+    
+    <!-- メインコンテンツコンテナ：最大幅を設定し、中央に配置 -->
+    <div class="w-full max-w-2xl">
+        <!-- タイトルセクション -->
+        <header class="text-center mb-8 sm:mb-12 pt-4">
+            <!-- 鮮やかなピンクのタイトルで、ドロップシャドウを適用しポップに -->
+            <h1 class="text-5xl sm:text-6xl font-extrabold text-custom-pink drop-shadow-lg leading-tight">
+                ✨ 情報Ⅰ学習用App ✨
+            </h1>
+            <p class="text-gray-600 text-lg mt-2">楽しく学べるアプリへのリンク集です！</p>
+        </header>
+
+        <!-- アプリケーションリンク リスト -->
+        <ul class="space-y-4">
+            <!-- 各リンクをカラフルなカードとして表現 -->
+            
+            <!-- カード1: パスワードクラック -->
+            <li class="container bg-pink-200 text-pink-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./tryPassword/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        🔑 パスワードクラック「tryPassword」
+                    </span>
+                </a>
+            </li>
+
+            <!-- カード2: 色あてゲーム -->
+            <li class="container bg-green-200 text-green-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./colorMaster/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        🎨 色あてゲーム「colorMaster」
+                    </span>
+                </a>
+            </li>
+
+            <!-- カード3: イメージ変換 -->
+            <li class="container bg-blue-200 text-blue-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./imageTransformer/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        🖼️ イメージ変換「imageTransformer」
+                    </span>
+                </a>
+            </li>
+
+            <!-- カード4: 暗号化シミュレータ -->
+            <li class="container bg-purple-200 text-purple-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./scoreEnc/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        🔒 暗号化シミュレータ「scoreEnc」
+                    </span>
+                </a>
+            </li>
+
+            <!-- カード5: 生成AIレポート -->
+            <li class="container bg-red-200 text-red-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./ai_spa/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        🤖 2025.08.生成AIレポート「GenerativeAI」
+                    </span>
+                </a>
+            </li>
+
+            <!-- カード6: 奈留実践ポスターセッションまとめ -->
+            <li class="container bg-yellow-300 text-yellow-800 p-5 rounded-2xl shadow-xl 
+                       hover:shadow-2xl hover:scale-[1.02] transition duration-300 ease-in-out cursor-pointer">
+                <a href="./naru_activity/index.html" class="block">
+                    <span class="text-2xl font-bold flex items-center">
+                        ⭐ 2025奈留実践ポスターセッションまとめサイト
+                    </span>
+                </a>
+            </li>
+        </ul>
+    </div>
 </body>
 </html>
 
