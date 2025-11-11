@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奈留高校 総合的な探究の時間「奈留実践」まとめ</title>
+    <style>
+        /* 全体設定 */
+        body {
+            font-family: 'Arial', 'Hiragino Kaku Gothic ProN', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fce4ec; /* ポップなピンクの背景 */
+            color: #333;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: #ff80ab; /* 鮮やかなピンク */
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin: 0;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px #c2185b; /* 影で立体感 */
+        }
+
+        header p {
+            font-size: 1.2em;
+            margin: 5px 0 0;
+        }
+
+        /* メインコンテンツ */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* プロジェクト紹介セクション */
+        .project-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px; /* 角丸で柔らかく */
+            margin-bottom: 40px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border: 5px solid #ffab91; /* オレンジ系の枠線 */
+        }
+
+        .project-section h2 {
+            font-size: 2em;
+            color: #e91e63; /* 濃いピンク */
+            border-bottom: 3px dashed #f48fb1; /* 点線でかわいく */
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* プロジェクトカード */
+        .project-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: #fff9c4; /* クリームイエロー */
+            border: 3px solid #ffd740; /* 濃い黄色 */
+            border-radius: 12px;
+            padding: 20px;
+            width: calc(33% - 25px); /* 3列表示 */
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.02); /* ホバーで少し浮き上がる */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            color: #ff6f00; /* オレンジ */
+            font-size: 1.4em;
+            margin-top: 0;
+            min-height: 40px; /* タイトル行を揃えるため */
+        }
+
+        .card p {
+            font-size: 0.9em;
+            color: #6a1b9a; /* 紫 */
+            min-height: 70px;
+        }
+
+        /* 詳細ボタン */
+        .detail-button {
+            display: inline-block;
+            background-color: #4dd0e1; /* スカイブルー */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px; /* 丸いボタン */
+            text-decoration: none;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 4px #00acc1; /* 立体的な影 */
+            transition: all 0.1s;
+            margin-top: 15px;
+        }
+
+        .detail-button:hover {
+            background-color: #00acc1;
+        }
+
+        .detail-button:active {
+            transform: translateY(4px); /* ボタンを押した時のエフェクト */
+            box-shadow: 0 0 #00acc1;
+        }
+
+        /* フッター */
+        footer {
+            background-color: #ff80ab;
+            color: white;
+            padding: 15px 0;
+            margin-top: 50px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌟 奈留高校 「奈留実践」の軌跡 🌟</h1>
+        <p>総合的な探究の時間で生まれた、私たち高校生のアイデアと活動をポップにご紹介！</p>
+    </header>
+
+    <div class="container">
+
+        <div class="project-section">
+            <h2>🚀 注目プロジェクト PICK UP！</h2>
+
+            <div class="project-cards">
+                <div class="card">
+                    <h3>🍡 ふくれ餅の継承と進化 🚀</h3>
+                    <p>奈留の伝統的なお菓子「ふくれ餅」を、若い世代にも親しまれるようにレシピを改良し、新しい魅力を発信！</p>
+                    <a href="#" class="detail-button">活動報告を見る！</a>
+                </div>
+
+                <div class="card">
+                    <h3>🙏 潜伏キリシタンの歴史と奈留の文化</h3>
+                    <p>世界遺産にも関連する、奈留島の潜伏キリシタンの歴史を深く探究し、未来へ伝えるための活動を行いました。</p>
+                    <a href="#" class="detail-button">探究の足跡はこちら</a>
+                </div>
+
+                <div class="card">
+                    <h3>🐈 Nekonect in 奈留 (ネコネクト)</h3>
+                    <p>島にいる猫たちと、地域の人々、観光客を繋ぐアイデアを考案！猫をテーマにした地域活性化プランを企画・実行！</p>
+                    <a href="#" class="detail-button">猫活動をチェック！</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-section">
+            <h2>💡 その他の楽しい探究テーマ！</h2>
+
+            <div class="project-cards">
+                <div class="card">
+                    <h3>🍊 奈留の隠れた地域資源を発掘！</h3>
+                    <p>地元食材や観光スポットを再調査し、SNSや動画でPRする企画に取り組みました。</p>
+                    <a href="#" class="detail-button">もっと知りたい！</a>
+                </div>
+
+                <div class="card">
+                    <h3>♻️ 海を守る！クリーン奈留島大作戦</h3>
+                    <p>海岸清掃活動や、海洋ゴミの調査、環境教育のためのパンフレット作成などを行いました。</p>
+                    <a href="#" class="detail-button">アクションを見る</a>
+                </div>
+
+                <div class="card">
+                    <h3>🗺️ 若者が考える奈留島観光ガイド</h3>
+                    <p>高校生の視点で選んだ「映えるスポット」や「グルメ」を紹介する新しい観光プランを提案！</p>
+                    <a href="#" class="detail-button">プランを見る！</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        &copy; 2025 奈留高校 総合的な探究の時間「奈留実践」 | Made with Fun by Students
+    </footer>
+
+</body>
+</html>
