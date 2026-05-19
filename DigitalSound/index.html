@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音のデジタル化（標本化・量子化）学習アプリ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fef9e7; /* 柔らかいクリーム色の背景 */
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --main-color: #48dbfb; /* ポップなターコイズブルー */
+            --accent-pink: #ff9ff3; /* ポップなピンク */
+            --accent-green: #1dd1a1; /* ポップなグリーン */
+            --accent-orange: #ff9f43; /* ポップなオレンジ */
+            --record-color: #ff6b6b; /* ポップな赤 */
+            --shadow: 0 10px 20px rgba(0,0,0,0.1);
+            --btn-shadow: 0 6px 0 #b2bec3; /* ボタンの立体感用の影 */
+            --btn-active-shadow: 0 2px 0 #b2bec3;
+        }
+
+        body {
+            font-family: 'Kosugi Maru', sans-serif; /* 丸文字フォント */
+            background-color: var(--bg-color);
+            background-image: linear-gradient(135deg, #fef9e7 0%, #dff9fb 100%); /* 薄いグラデーション */
+            color: var(--text-color);
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 30px; /* 角をかなり丸く */
+            box-shadow: var(--shadow);
+            border: 4px solid var(--main-color); /* カラフルな枠線 */
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--main-color);
+            margin-top: 0;
+            font-size: 2.8rem;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1); /* 少し立体感 */
+        }
+
+        .instructions {
+            background-color: #f1f2f6;
+            border: 3px dashed var(--accent-orange); /* 点線の枠 */
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #57606f;
+            position: relative;
+        }
+        
+        .instructions strong {
+            color: var(--accent-orange);
+            font-size: 1.2rem;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            font-family: 'Kosugi Maru', sans-serif;
+            border-radius: 50px; /* 完全に丸いボタン */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            top: 0;
+        }
+
+        button:active {
+            top: 4px; /* 押した時に沈む */
+        }
+
+        button:disabled {
+            background-color: #dfe6e9 !important;
+            color: #b2bec3 !important;
+            box-shadow: 0 6px 0 #b2bec3 !important;
+            cursor: not-allowed;
+            top: 0 !important;
+        }
+
+        #recordBtn {
+            background-color: var(--record-color);
+            color: white;
+            box-shadow: 0 6px 0 #e17055;
+        }
+        #recordBtn:hover:not(:disabled) {
+            background-color: #ff7675;
+        }
+        #recordBtn:active:not(:disabled) {
+            box-shadow: 0 2px 0 #e17055;
+        }
+
+        #playBtn {
+            background-color: var(--accent-green);
+            color: white;
+            box-shadow: 0 6px 0 #00b894;
+        }
+        #playBtn:hover:not(:disabled) {
+            background-color: #55efc4;
+        }
+        #playBtn:active:not(:disabled) {
+            box-shadow: 0 2px 0 #00b894;
+        }
+        
+        #playBtn.playing {
+            background-color: var(--accent-orange);
+            box-shadow: 0 6px 0 #e17055;
+        }
+        #playBtn.playing:hover {
+            background-color: #fab1a0;
+        }
+        #playBtn.playing:active {
+            box-shadow: 0 2px 0 #e17055;
+        }
+
+        .status {
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-top: 15px;
+            min-height: 24px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            background: #f1f2f6;
+            padding: 25px;
+            border-radius: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2f3542;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+        }
+        
+        .control-group label span {
+            background: var(--main-color);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* カスタムスライダーのスタイル */
+        .control-group input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 12px;
+            background: #dfe6e9;
+            border-radius: 10px;
+            outline: none;
+            margin-top: 10px;
+        }
+        
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            background: var(--main-color);
+            border: 4px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        
+        .control-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--accent-pink);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--main-color);
+            border: 4px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .control-group .help-text {
+            font-size: 0.9rem;
+            color: #747d8c;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        canvas {
+            border: 4px solid #dfe6e9;
+            background-color: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            height: 380px;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #57606f;
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 50px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .container { padding: 20px; }
+            h1 { font-size: 2rem; }
+            button { font-size: 1.1rem; padding: 12px 25px; }
+            .legend { flex-direction: column; gap: 10px; align-items: start; border-radius: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>音のデジタル化シミュレーター</h1>
+    
+    <div class="instructions">
+        <strong>★あそびかた★</strong><br>
+        1. 「録音開始」をおして、3秒間マイクに声をいれてね！<br>
+        2. 録音が終わったら、「再生」をおすとデジタルになった音がきけるよ。<br>
+        3. 再生しながら、下のスライダーをうごかして音がどうかわるかためしてみよう！
+    </div>
+
+    <div class="btn-container">
+        <button id="recordBtn">● 録音開始 (3秒)</button>
+        <button id="playBtn" disabled>▶ 設定した音を再生</button>
+        <div id="status" class="status">マイクのじゅんびOK！録音してね。</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>① 標本化（サンプリング）: <span id="samplingVal">1 (最高)</span></label>
+            <input type="range" id="sampling" min="1" max="64" value="1" step="1">
+            <span class="help-text">大きくするほど、音がこもって聞こえるよ。</span>
+        </div>
+
+        <div class="control-group">
+            <label>② 量子化（ビット数）: <span id="quantizationVal">8 bit</span></label>
+            <input type="range" id="quantization" min="1" max="8" value="8" step="1">
+            <span class="help-text">小さくするほど、「サー」っていうノイズがふえるよ。</span>
+        </div>
+
+        <div class="control-group">
+            <label>波形の拡大（ズーム）: <span id="zoomVal">1000</span></label>
+            <input type="range" id="zoom" min="200" max="5000" value="1000" step="100">
+        </div>
+
+        <div class="control-group">
+            <label>表示位置（スクロール）: <span id="positionVal">50%</span></label>
+            <input type="range" id="position" min="0" max="100" value="50" step="1">
+        </div>
+    </div>
+
+    <canvas id="canvas" width="1800" height="700"></canvas>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background-color: #cccccc;"></div>もとの波形（アナログ）</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #ff6b6b;"></div>変換後の波形（デジタル）</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: #48dbfb; border-radius: 50%;"></div>サンプリングした点</div>
+    </div>
+</div>
+
+<script>
+    // JS部分は以前のコードと全く同じです
+    let audioCtx = null;
+    let audioBuffer = null;
+    let sourceNode = null;
+    let scriptNode = null;
+    const RECORD_DURATION = 3000; 
+
+    const recordBtn = document.getElementById('recordBtn');
+    const playBtn = document.getElementById('playBtn');
+    const statusText = document.getElementById('status');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const samplingSlider = document.getElementById('sampling');
+    const quantizationSlider = document.getElementById('quantization');
+    const zoomSlider = document.getElementById('zoom');
+    const positionSlider = document.getElementById('position');
+
+    const samplingVal = document.getElementById('samplingVal');
+    const quantizationVal = document.getElementById('quantizationVal');
+    const zoomVal = document.getElementById('zoomVal');
+    const positionVal = document.getElementById('positionVal');
+
+    recordBtn.addEventListener('click', startRecording);
+    playBtn.addEventListener('click', togglePlay);
+
+    [samplingSlider, quantizationSlider, zoomSlider, positionSlider].forEach(slider => {
+        slider.addEventListener('input', () => {
+            updateUIValues();
+            draw();
+        });
+    });
+
+    function updateUIValues() {
+        samplingVal.textContent = samplingSlider.value == 1 ? "1 (最高)" : `${samplingSlider.value}`;
+        quantizationVal.textContent = `${quantizationSlider.value} bit`;
+        zoomVal.textContent = `${zoomSlider.value}`;
+        positionVal.textContent = `${positionSlider.value} %`;
+    }
+
+    async function startRecording() {
+        stopAudio();
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            
+            mediaRecorder.onstop = async () => {
+                statusText.textContent = "音声データを解析中...";
+                const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                const arrayBuffer = await blob.arrayBuffer();
+                
+                audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
+                    audioBuffer = buffer;
+                    statusText.textContent = "録音完了！「再生」をおすか、スライダーをうごかしてみてね。";
+                    recordBtn.disabled = false;
+                    playBtn.disabled = false;
+                    draw();
+                }, (err) => {
+                    statusText.textContent = "エラー: 音声のデコードに失敗しました。";
+                    recordBtn.disabled = false;
+                });
+
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            recordBtn.disabled = true;
+            playBtn.disabled = true;
+            statusText.textContent = "● 録音中... マイクに声をいれてね！";
+
+            setTimeout(() => {
+                if (mediaRecorder.state === "recording") {
+                    mediaRecorder.stop();
+                }
+            }, RECORD_DURATION);
+
+        } catch (err) {
+            console.error(err);
+            statusText.textContent = "マイクのアクセス権限を許可してください。";
+            recordBtn.disabled = false;
+        }
+    }
+
+    function togglePlay() {
+        if (sourceNode) stopAudio();
+        else playAudio();
+    }
+
+    function playAudio() {
+        if (!audioBuffer) return;
+
+        sourceNode = audioCtx.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+
+        scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
+
+        let sampleCounter = 0;
+        let lastValue = 0;
+
+        scriptNode.onaudioprocess = function(audioProcessingEvent) {
+            const inputBuffer = audioProcessingEvent.inputBuffer;
+            const outputBuffer = audioProcessingEvent.outputBuffer;
+
+            const inputData = inputBuffer.getChannelData(0);
+            const outputData = outputBuffer.getChannelData(0);
+
+            const step = parseInt(samplingSlider.value);
+            const bits = parseInt(quantizationSlider.value);
+            const levels = Math.pow(2, bits);
+
+            for (let i = 0; i < inputBuffer.length; i++) {
+                if (sampleCounter % step === 0) {
+                    const rawVal = inputData[i];
+                    const normalized = (rawVal + 1) / 2;
+                    const quantizedIdx = Math.round(normalized * (levels - 1));
+                    lastValue = (quantizedIdx / (levels - 1)) * 2 - 1;
+                }
+                outputData[i] = lastValue;
+                sampleCounter++;
+            }
+        };
+
+        sourceNode.connect(scriptNode);
+        scriptNode.connect(audioCtx.destination);
+
+        sourceNode.onended = () => {
+            if (sourceNode) { 
+                cleanUpAudioNodes();
+                setPlayButtonState(false);
+            }
+        };
+
+        sourceNode.start();
+        setPlayButtonState(true);
+    }
+
+    function stopAudio() {
+        if (sourceNode) {
+            try { sourceNode.stop(); } catch(e){}
+            cleanUpAudioNodes();
+            setPlayButtonState(false);
+        }
+    }
+
+    function cleanUpAudioNodes() {
+        if (sourceNode) sourceNode.disconnect();
+        if (scriptNode) scriptNode.disconnect();
+        sourceNode = null;
+        scriptNode = null;
+    }
+
+    function setPlayButtonState(isPlaying) {
+        if (isPlaying) {
+            playBtn.textContent = "■ 再生停止";
+            playBtn.classList.add('playing');
+        } else {
+            playBtn.textContent = "▶ 設定した音を再生";
+            playBtn.classList.remove('playing');
+        }
+    }
+
+    function draw() {
+        if (!audioBuffer) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#dfe6e9";
+            ctx.font = "bold 40px 'Kosugi Maru'";
+            ctx.textAlign = "center";
+            ctx.fillText("ここに録音した波形がでるよ", canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        const rawData = audioBuffer.getChannelData(0);
+        const samplingStep = parseInt(samplingSlider.value);
+        const bits = parseInt(quantizationSlider.value);
+        const zoomSamples = parseInt(zoomSlider.value);
+        const posPercent = parseInt(positionSlider.value) / 100;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const midY = height / 2;
+
+        const maxStartIdx = Math.max(0, rawData.length - zoomSamples);
+        const startIdx = Math.floor(maxStartIdx * posPercent);
+
+        ctx.strokeStyle = '#dfe6e9';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(width, midY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#cccccc';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < zoomSamples; i++) {
+            const idx = startIdx + i;
+            if (idx >= rawData.length) break;
+            const x = (i / zoomSamples) * width;
+            const y = midY - (rawData[idx] * midY * 0.9);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ff6b6b'; // ポップな赤
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+
+        let lastQuantizedY = midY;
+        const levels = Math.pow(2, bits);
+        const samplePoints = [];
+
+        for (let i = 0; i < zoomSamples; i++) {
+            const idx = startIdx + i;
+            const x = (i / zoomSamples) * width;
+
+            if ((idx - startIdx) % samplingStep === 0) {
+                let rawVal = idx < rawData.length ? rawData[idx] : 0;
+                const normalized = (rawVal + 1) / 2;
+                const quantizedIdx = Math.round(normalized * (levels - 1));
+                const quantizedVal = (quantizedIdx / (levels - 1)) * 2 - 1;
+
+                lastQuantizedY = midY - (quantizedVal * midY * 0.9);
+                samplePoints.push({x: x, y: lastQuantizedY});
+            }
+
+            if (i === 0) ctx.moveTo(x, lastQuantizedY);
+            else ctx.lineTo(x, lastQuantizedY);
+        }
+        ctx.stroke();
+
+        if (zoomSamples <= 3000) {
+            ctx.fillStyle = '#48dbfb'; // ポップなターコイズ
+            samplePoints.forEach(pt => {
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2); // 点を少し大きく
+                ctx.fill();
+            });
+        }
+    }
+
+    updateUIValues();
+    draw();
+</script>
+
+</body>
+</html>
