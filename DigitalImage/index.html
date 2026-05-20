@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像デジタル化シミュレーター</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        button, label.btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        button:hover, label.btn:hover {
+            background-color: #2980b9;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .camera-container {
+            display: none;
+            text-align: center;
+            margin-bottom: 20px;
+            background: #000;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        #video {
+            max-width: 100%;
+            max-height: 300px;
+            transform: scaleX(-1); /* 自撮りミラー表示 */
+        }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        .control-group input[type="range"], 
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+        }
+        .val-display {
+            float: right;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .view-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            background: #fafafa;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 400px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .code-output {
+            margin-top: 25px;
+        }
+        .code-output label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            box-sizing: border-box;
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>画像デジタル化シミュレーター</h1>
+
+    <!-- 画像入力セクション -->
+    <div class="upload-section">
+        <label class="btn">
+            画像ファイルを選択
+            <input type="file" id="imageInput" accept="image/*">
+        </label>
+        <button id="startCameraBtn">カメラを起動</button>
+        <button id="captureBtn" style="display: none; background-color: #2ecc71;">撮影する</button>
+    </div>
+
+    <!-- カメラ映像表示エリア -->
+    <div class="camera-container" id="cameraContainer">
+        <video id="video" autoplay playsinline></video>
+    </div>
+
+    <!-- メイン操作・表示エリア -->
+    <div class="main-layout">
+        <!-- 左側：コントロールパネル -->
+        <div class="control-panel">
+            <!-- 標本化設定 -->
+            <div class="control-group">
+                <label for="samplingSlider">
+                    標本化 (解像度): モザイクサイズ
+                    <span class="val-display" id="samplingVal">10 px</span>
+                </label>
+                <input type="range" id="samplingSlider" min="1" max="50" value="10">
+                <small style="color:#7f8c8d;">1pxに設定すると元の解像度になります。</small>
+            </div>
+
+            <!-- 量子化設定 -->
+            <div class="control-group">
+                <label for="quantizationSelect">
+                    量子化 (各色のビット数 / 階調)
+                    <span class="val-display" id="quantizationVal">3 bit (8階調)</span>
+                </label>
+                <select id="quantizationSelect">
+                    <option value="1">1 bit (2階調 - 白黒・原色)</option>
+                    <option value="2">2 bit (4階調)</option>
+                    <option value="3" selected>3 bit (8階調)</option>
+                    <option value="4">4 bit (16階調)</option>
+                    <option value="8">8 bit (256階調 - 通常)</option>
+                </select>
+            </div>
+            
+            <p style="font-size: 13px; color: #7f8c8d; line-height: 1.5;">
+                <strong>標本化：</strong> 連続的な画像を一定の間隔（マス目）で区切って拾い出すこと。<br>
+                <strong>量子化：</strong> 拾い出した色の濃度を、段階的なデジタル数値に当てはめること。
+            </p>
+        </div>
+
+        <!-- 右側：シミュレーション結果表示 -->
+        <div class="view-panel">
+            <canvas id="canvas"></canvas>
+            <div id="noImageText" style="color: #95a5a6;">画像が読み込まれていません</div>
+        </div>
+    </div>
+
+    <!-- 符号化データ出力 -->
+    <div class="code-output">
+        <label for="codeTextArea">符号化した数値データ (RGBの配列データ):</label>
+        <textarea id="codeTextArea" readonly placeholder="画像を読み込むと、ここにデジタル化（符号化）された数値データが出力されます。量が多い場合は一部のみ表示されます。"></textarea>
+    </div>
+</div>
+
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const cameraContainer = document.getElementById('cameraContainer');
+    const video = document.getElementById('video');
+    
+    const samplingSlider = document.getElementById('samplingSlider');
+    const samplingVal = document.getElementById('samplingVal');
+    const quantizationSelect = document.getElementById('quantizationSelect');
+    const quantizationVal = document.getElementById('quantizationVal');
+    
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const noImageText = document.getElementById('noImageText');
+    const codeTextArea = document.getElementById('codeTextArea');
+
+    let originalImage = null;
+    let stream = null;
+
+    // --- 1. 画像の読み込み処理 ---
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        stopCamera();
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                originalImage = img;
+                noImageText.style.display = 'none';
+                processImage();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // --- 2. カメラ機能の処理 ---
+    startCameraBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+            video.srcObject = stream;
+            cameraContainer.style.display = 'block';
+            captureBtn.style.display = 'inline-block';
+            startCameraBtn.style.display = 'none';
+        } catch (err) {
+            alert('カメラの起動に失敗しました。パーミッション（権限）を確認してください。');
+            console.error(err);
+        }
+    });
+
+    captureBtn.addEventListener('click', () => {
+        if (!stream) return;
+        
+        // ビデオの現在のフレームを隠しキャンバスに描画して画像化
+        const hiddenCanvas = document.createElement('canvas');
+        hiddenCanvas.width = video.videoWidth;
+        hiddenCanvas.height = video.videoHeight;
+        const hCtx = hiddenCanvas.getContext('2d');
+        
+        // 自撮り用に反転させて撮影
+        hCtx.translate(video.videoWidth, 0);
+        hCtx.scale(-1, 1);
+        hCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        
+        const img = new Image();
+        img.onload = () => {
+            originalImage = img;
+            noImageText.style.display = 'none';
+            processImage();
+            stopCamera();
+        };
+        img.src = hiddenCanvas.toDataURL('image/png');
+    });
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        cameraContainer.style.display = 'none';
+        captureBtn.style.display = 'none';
+        startCameraBtn.style.display = 'inline-block';
+    }
+
+    // --- 3. イベントリスナー（スライダー・セレクトボックス変更時） ---
+    samplingSlider.addEventListener('input', (e) => {
+        samplingVal.textContent = e.target.value + ' px';
+        processImage();
+    });
+
+    quantizationSelect.addEventListener('change', (e) => {
+        const bit = e.target.value;
+        const levels = Math.pow(2, bit);
+        quantizationVal.textContent = `${bit} bit (${levels}階調)`;
+        processImage();
+    });
+
+    // --- 4. 画像処理（デジタル化シミュレーションコア） ---
+    function processImage() {
+        if (!originalImage) return;
+
+        const sampleSize = parseInt(samplingSlider.value);
+        const bit = parseInt(quantizationSelect.value);
+        const levels = Math.pow(2, bit);
+
+        // 元画像の比率を維持してキャンバスサイズを調整 (最大幅500px程度)
+        const maxWidth = 500;
+        let width = originalImage.width;
+        let height = originalImage.height;
+        if (width > maxWidth) {
+            height = Math.round((maxWidth / width) * height);
+            width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+
+        // 1. いったんキャンバスに元画像を描画
+        ctx.drawImage(originalImage, 0, 0, width, height);
+        
+        // 2. ピクセルデータを取得
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+
+        // 符号化（数値化）データを一時的に格納する配列
+        let encodedData = [];
+
+        // 3. 標本化（グリッドごとにループ）と量子化の実行
+        for (let y = 0; y < height; y += sampleSize) {
+            for (let x = 0; x < width; x += sampleSize) {
+                
+                // 代表色の計算（ここでは各マスの左上のピクセルの色を使用）
+                const pixelIndex = (y * width + x) * 4;
+                if (pixelIndex >= data.length) continue;
+
+                let r = data[pixelIndex];
+                let g = data[pixelIndex + 1];
+                let b = data[pixelIndex + 2];
+
+                // 量子化処理 (0~255の値を指定の階調に丸める)
+                // 255を(階調数-1)で割り、ステップ幅を決める
+                const step = 255 / (levels - 1);
+                
+                // 何番目の階調（レベル）に属するかを計算
+                let rLevel = Math.round(r / step);
+                let gLevel = Math.round(g / step);
+                let bLevel = Math.round(b / step);
+
+                // レベルからデジタル化されたRGB値へ復元
+                let qR = Math.round(rLevel * step);
+                let qG = Math.round(gLevel * step);
+                let qB = Math.round(bLevel * step);
+
+                // 符号化データの記録 (0～階調数-1 の数値で記録)
+                encodedData.push(`[${rLevel},${gLevel},${bLevel}]`);
+
+                // 標本化されたマス目全体を、量子化された色で塗りつぶす
+                for (let h = 0; h < sampleSize; h++) {
+                    for (let w = 0; w < sampleSize; w++) {
+                        const targetY = y + h;
+                        const targetX = x + w;
+                        
+                        if (targetX < width && targetY < height) {
+                            const idx = (targetY * width + targetX) * 4;
+                            data[idx] = qR;       // R
+                            data[idx + 1] = qG;   // G
+                            data[idx + 2] = qB;   // B
+                            // data[idx+3]（アルファ値）はそのまま
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. 加工したピクセルデータをキャンバスに反映
+        ctx.putImageData(imgData, 0, 0);
+
+        // 5. 符号化数値をテキストエリアに出力
+        // データ量が膨大になり画面がフリーズするのを防ぐため、最大1000件に制限
+        const totalPixels = encodedData.length;
+        if (totalPixels > 1000) {
+            codeTextArea.value = `// 合計 ${totalPixels} マス（標本点）のデータが存在します。\n// 最初の1000件を表示しています。\n` + encodedData.slice(0, 1000).join(", ") + "...他";
+        } else {
+            codeTextArea.value = `// 合計 ${totalPixels} マスのデータ\n` + encodedData.join(", ");
+        }
+    }
+</script>
+
+</body>
+</html>
