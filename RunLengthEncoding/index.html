@@ -1,1 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ピコピコ！ランレングス圧縮シミュレーター</title>
+    <style>
+        /* ポップで明るいデザインのベース設定 */
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            background-color: #f0f7ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
+        h1 {
+            color: #ff477e;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #ffccd5;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .description {
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 0px #ddd;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            max-width: 500px;
+            text-align: center;
+            border: 2px solid #333;
+        }
+
+        /* メインコンテナ */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 30px;
+            box-shadow: 0 8px 0px #ffccd5;
+            border: 3px solid #333;
+            max-width: 90%;
+        }
+
+        /* カラーパレット */
+        .palette {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 2px solid #333;
+        }
+
+        .palette-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .palette-btn:active {
+            transform: scale(0.9);
+        }
+
+        .palette-btn.selected {
+            outline: 4px solid #4cc9f0;
+            transform: scale(1.1);
+        }
+
+        .btn-w { background-color: #ffffff; }
+        .btn-r { background-color: #ff477e; }
+
+        /* 10x10のドット絵グリッド */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            background: #333;
+            padding: 6px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .cell {
+            width: 32px;
+            height: 32px;
+            background-color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+
+        /* 結果表示エリア */
+        .results {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .result-box {
+            background: #f4f4f9;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .result-box h3 {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+            color: #4a4e69;
+            display: inline-block;
+            background: #e0aeff;
+            padding: 2px 10px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        .code-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            word-break: break-all;
+            color: #222;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            min-height: 24px;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        /* リセットボタン */
+        .clear-btn {
+            background-color: #4cc9f0;
+            color: white;
+            border: 2px solid #333;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #333;
+            margin-bottom: 15px;
+        }
+        .clear-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ピコピコ！ランレングス圧縮</h1>
+    
+    <div class="description">
+        マス目をくりっくして色を変えてみよう！🎨<br>
+        下の「圧縮データ」がリアルタイムで変化するよ。
+    </div>
+
+    <div class="container">
+        <div class="palette">
+            <button class="palette-btn btn-w selected" onclick="selectColor('W')" title="白（背景）"></button>
+            <button class="palette-btn btn-r" onclick="selectColor('R')" title="赤（ハート）"></button>
+        </div>
+
+        <div id="grid" class="grid"></div>
+
+        
+        <div class="results">
+            <div class="result-box">
+                <h3>パターンA：行ごとに圧縮</h3>
+                <div id="row-rle" class="code-display" style="font-size: 0.9rem; white-space: pre-line;"></div>
+            </div>
+
+            <div class="result-box">
+                <h3>パターンB：全体を一続きで圧縮</h3>
+                <div id="flat-rle" class="code-display"></div>
+                <div id="flat-length" class="badge"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初期データ（ハートのドット絵）
+        const initialHeart = [
+            ["W", "W", "W", "W", "W", "W", "W", "W", "W", "W"],
+            ["W", "W", "R", "R", "W", "W", "R", "R", "W", "W"],
+            ["W", "R", "R", "R", "R", "R", "R", "R", "R", "W"],
+            ["W", "R", "R", "R", "R", "R", "R", "R", "R", "W"],
+            ["W", "R", "R", "R", "R", "R", "R", "R", "R", "W"],
+            ["W", "R", "R", "R", "R", "R", "R", "R", "R", "W"],
+            ["W", "W", "R", "R", "R", "R", "R", "R", "W", "W"],
+            ["W", "W", "W", "R", "R", "R", "R", "W", "W", "W"],
+            ["W", "W", "W", "W", "R", "R", "W", "W", "W", "W"],
+            ["W", "W", "W", "W", "W", "W", "W", "W", "W", "W"]
+        ];
+
+        let currentGrid = JSON.parse(JSON.stringify(initialHeart));
+        let selectedColor = 'W';
+
+        // 色選択の切り替え
+        function selectColor(color) {
+            selectedColor = color;
+            document.querySelectorAll('.palette-btn').forEach(btn => btn.classList.remove('selected'));
+            if(color === 'W') document.querySelector('.btn-w').classList.add('selected');
+            if(color === 'R') document.querySelector('.btn-r').classList.add('selected');
+        }
+
+        // グリッドの生成
+        function createGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    // 色の反映
+                    setCellColor(cell, currentGrid[r][c]);
+
+                    // クリックイベント
+                    cell.addEventListener('click', () => {
+                        currentGrid[r][c] = selectedColor;
+                        setCellColor(cell, selectedColor);
+                        updateRLE();
+                    });
+
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function setCellColor(element, color) {
+            if (color === 'W') element.style.backgroundColor = '#ffffff';
+            if (color === 'R') element.style.backgroundColor = '#ff477e';
+        }
+
+        // ランレングス圧縮ロジック
+        function runLengthEncode(arr) {
+            if (arr.length === 0) return "";
+            let result = [];
+            let current = arr[0];
+            let count = 1;
+
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i] === current) {
+                    count++;
+                } else {
+                    result.push(count + current);
+                    current = arr[i];
+                    count = 1;
+                }
+            }
+            result.push(count + current);
+            return result.join(" ");
+        }
+
+        // データの更新と画面への反映
+        function updateRLE() {
+            // パターンA: 行ごと
+            let rowTexts = [];
+            for (let r = 0; r < 10; r++) {
+                let rowCode = runLengthEncode(currentGrid[r]);
+                rowTexts.push(`行${r+1}: ${rowCode}`);
+            }
+            document.getElementById('row-rle').innerText = rowTexts.join("\n");
+
+            // パターンB: 一続き
+            let flatArray = [];
+            for (let r = 0; r < 10; r++) {
+                flatArray = flatArray.concat(currentGrid[r]);
+            }
+            let flatCode = runLengthEncode(flatArray);
+            document.getElementById('flat-rle').innerText = flatCode;
+
+            // 文字数カウント（圧縮の効果を実感させるため）
+            let compressedLen = flatCode.replace(/ /g, "").length;
+            document.getElementById('flat-length').innerText = `元のデータ: 100文字 ➡️ 圧縮後: ${compressedLen}文字`;
+        }
+
+        // ハートに戻す
+        function resetToHeart() {
+            currentGrid = JSON.parse(JSON.stringify(initialHeart));
+            createGrid();
+            updateRLE();
+        }
+
+        // 初期起動
+        createGrid();
+        updateRLE();
+    </script>
+</body>
+</html>
