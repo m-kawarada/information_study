@@ -37,18 +37,40 @@
             border: 2px solid #333;
         }
 
-        /* メインコンテナ */
+        /* ★メインコンテナをフレックスボックスに変更★
+           通常（広い画面）は横並び（row）で配置します
+        */ 
         .container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
             background: white;
             padding: 20px;
             border-radius: 30px;
             box-shadow: 0 8px 0px #ffccd5;
             border: 3px solid #333;
-            max-width: 90%;
+            max-width: 950px;
+            width: 100%;
+            box-sizing: border-box;
         }
+        /* 左側の編集エリア（パレット、グリッド、ボタン） */
+        .editor-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        /* 右側の結果表示エリア */
+        .results-area {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1;
+        }
+
 
         /* カラーパレット */
         .palette {
@@ -103,11 +125,6 @@
         }
 
         /* 結果表示エリア */
-        .results {
-            width: 100%;
-            max-width: 400px;
-        }
-
         .result-box {
             background: #f4f4f9;
             border: 2px solid #333;
@@ -164,6 +181,22 @@
             transform: translateY(4px);
             box-shadow: none;
         }
+        /* ★メディアクエリ：画面サイズが768px以下（スマホなど）の場合の設定★ */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column; /* 1列（縦並び）に変更！ */
+                align-items: center;
+                padding: 20px;
+            }
+            .editor-area, .results-area {
+                width: 100%;
+            }
+            .cell {
+                width: 28px; /* スマホ向けにマス目を少しだけコンパクトに */
+                height: 28px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -176,15 +209,18 @@
     </div>
 
     <div class="container">
-        <div class="palette">
+       <div class="editor-area">
+       <div class="palette">
             <button class="palette-btn btn-w selected" onclick="selectColor('W')" title="白（背景）"></button>
             <button class="palette-btn btn-r" onclick="selectColor('R')" title="赤（ハート）"></button>
         </div>
 
         <div id="grid" class="grid"></div>
 
+            <button class="clear-btn" onclick="resetToHeart()">❤️ ハートに戻す</button>
+        </div>
         
-        <div class="results">
+        <div class="results-area">
             <div class="result-box">
                 <h3>パターンA：行ごとに圧縮</h3>
                 <div id="row-rle" class="code-display" style="font-size: 0.9rem; white-space: pre-line;"></div>
@@ -311,4 +347,5 @@
         updateRLE();
     </script>
 </body>
+</html>
 </html>
