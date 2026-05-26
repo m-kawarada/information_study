@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハフマン符号シミュレーター</title>
+    <style>
+        /* ポップで明るいデザインのベース設定 */
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            background-color: #fff0f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #7209b7;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #e0b1f5;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .description {
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 0px #ddd;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            max-width: 600px;
+            text-align: center;
+            border: 2px solid #333;
+        }
+
+        /* メインコンテナ（Flexboxで2列/1列を切り替え） */
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 8px 0px #e0b1f5;
+            border: 3px solid #333;
+            max-width: 1000px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 左側：入力エリア */
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* 右側：解析結果エリア */
+        .results-area {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1.2;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 3px solid #333;
+            border-radius: 15px;
+            box-sizing: border-box;
+            resize: none;
+            font-weight: bold;
+            font-family: monospace;
+            background-color: #fdfaf6;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #7209b7;
+        }
+
+        /* 結果表示ボックス */
+        .result-box {
+            background: #fcf4ff;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #333;
+            display: inline-block;
+            background: #f72585;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        .code-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            word-break: break-all;
+            color: #222;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            min-height: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #7209b7;
+        }
+
+        /* 登場頻度リスト（簡易グラフ風） */
+        .freq-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        .freq-row {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding: 6px 10px;
+        }
+
+        .freq-char {
+            font-family: monospace;
+            font-weight: bold;
+            width: 50px;
+        }
+
+        .freq-bar-container {
+            flex: 1;
+            background: #f0f0f0;
+            height: 16px;
+            border-radius: 8px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .freq-bar {
+            background: #4cc9f0;
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.3s;
+        }
+
+        .freq-code {
+            font-family: monospace;
+            font-weight: bold;
+            color: #f72585;
+            width: 80px;
+            text-align: right;
+        }
+
+        .clear-btn {
+            background-color: #4cc9f0;
+            color: white;
+            border: 2px solid #333;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #333;
+            margin-top: 15px;
+            align-self: center;
+        }
+        .clear-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* 画面サイズが768px以下の場合のレスポンシブ設定 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .input-area, .results-area {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>英文ハフマン符号化</h1>
+    
+    <div class="description">
+        英語のメッセージを入力してみよう！🔤<br>
+        よく使う文字ほど「短い暗号（ビット）」に自動で変換される仕組みを見てみよう。
+    </div>
+
+    <div class="container">
+        
+        <div class="input-area">
+            <h3 style="margin-top:0;">入力メッセージ（半角英数）</h3>
+            <textarea id="text-input" oninput="processHuffman()">HELLO WORLD, WELCOME TO INFORMATION CLASS!</textarea>
+            <button class="clear-btn" onclick="resetText()">元の文章に戻す</button>
+            
+            <div class="result-box" style="margin-top: 25px;">
+                <h3>圧縮されたビット列</h3>
+                <div id="binary-output" class="code-display" style="font-size: 0.9rem;"></div>
+            </div>
+        </div>
+
+        <div class="results-area">
+            <div class="result-box">
+                <h3>データ量の比較</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>元のデータ量<br><small>(固定長: 1文字8つ分として)</small></div>
+                        <div id="original-size" class="stat-val">0 bit</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>ハフマン圧縮後</div>
+                        <div id="compressed-size" class="stat-val">0 bit</div>
+                    </div>
+                </div>
+                <div id="compression-ratio" style="text-align: center; font-weight: bold; color: #f72585; margin-top: 10px;"></div>
+            </div>
+
+            <div class="result-box">
+                <h3>文字ごとの登場回数と割り当てられた符号</h3>
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">※半角スペースは「[space]」と表示しています。</div>
+                <div id="freq-list"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const defaultText = "HELLO WORLD, WELCOME TO INFORMATION CLASS!";
+
+        function resetText() {
+            document.getElementById('text-input').value = defaultText;
+            processHuffman();
+        }
+
+        function processHuffman() {
+            const text = document.getElementById('text-input').value;
+            if (!text) {
+                document.getElementById('binary-output').innerText = "(文字を入力してください)";
+                document.getElementById('original-size').innerText = "0 bit";
+                document.getElementById('compressed-size').innerText = "0 bit";
+                document.getElementById('compression-ratio').innerText = "";
+                document.getElementById('freq-list').innerHTML = "";
+                return;
+            }
+
+            // 1. 周波数（登場回数）のカウント
+            const freqMap = {};
+            for (let char of text) {
+                freqMap[char] = (freqMap[char] || 0) + 1;
+            }
+
+            // 2. ハフマン木の構築（簡易アルゴリズム）
+            const leaves = Object.keys(freqMap).map(char => ({
+                char: char,
+                freq: freqMap[char],
+                left: null,
+                right: null
+            }));
+
+            // 文字が1種類しか無い場合の特殊処理
+            if (leaves.length === 1) {
+                const codes = {};
+                codes[leaves[0].char] = "0";
+                displayResults(text, freqMap, codes);
+                return;
+            }
+
+            while (leaves.length > 1) {
+                // 頻度の低い順にソート
+                leaves.sort((a, b) => a.freq - b.freq);
+                
+                // 最も頻度の低い2つのノードを結合
+                const left = leaves.shift();
+                const right = leaves.shift();
+                
+                const parent = {
+                    char: null,
+                    freq: left.freq + right.freq,
+                    left: left,
+                    right: right
+                };
+                leaves.push(parent);
+            }
+
+            // 3. 木を走査して符号（0と1）を割り当て
+            const huffmanCodes = {};
+            function traverse(node, code) {
+                if (node.char !== null) {
+                    huffmanCodes[node.char] = code;
+                    return;
+                }
+                traverse(node.left, code + "0");
+                traverse(node.right, code + "1");
+            }
+            if(leaves.length > 0) traverse(leaves[0], "");
+
+            displayResults(text, freqMap, huffmanCodes);
+        }
+
+        function displayResults(text, freqMap, codes) {
+            // 元のサイズ（通常、コンピュータ内では1文字＝8ビット[1バイト]で計算するため、生徒にわかりやすく8bit固定長と比較します）
+            const origSize = text.length * 8;
+            
+            // 圧縮後のバイナリ生成とサイズ計算
+            let binaryStr = "";
+            let compSize = 0;
+            for (let char of text) {
+                binaryStr += codes[char];
+                compSize += codes[char].length;
+            }
+
+            document.getElementById('binary-output').innerText = binaryStr;
+            document.getElementById('original-size').innerText = `${origSize} bit`;
+            document.getElementById('compressed-size').innerText = `${compSize} bit`;
+
+            // 圧縮率の計算
+            const ratio = ((compSize / origSize) * 100).toFixed(1);
+            document.getElementById('compression-ratio').innerText = `元のデータ量の約 ${ratio} % に圧縮されました！✨`;
+
+            // 登場頻度リスト（グラフ）の描写
+            const sortedChars = Object.keys(freqMap).sort((a, b) => freqMap[b] - freqMap[a]);
+            const maxFreq = Math.max(...Object.values(freqMap));
+
+            let freqListHtml = '<div class="freq-table">';
+            sortedChars.forEach(char => {
+                const displayChar = char === " " ? "[space]" : char;
+                const freq = freqMap[char];
+                const code = codes[char];
+                const barWidth = (freq / maxFreq) * 100;
+
+                freqListHtml += `
+                    <div class="freq-row">
+                        <div class="freq-char">${displayChar}</div>
+                        <div style="font-size:0.8rem; color:#666; width:30px;">${freq}回</div>
+                        <div class="freq-bar-container">
+                            <div class="freq-bar" style="width: ${barWidth}%;"></div>
+                        </div>
+                        <div class="freq-code">${code} (${code.length}番)</div>
+                    </div>
+                `;
+            });
+            freqListHtml += '</div>';
+            document.getElementById('freq-list').innerHTML = freqListHtml;
+        }
+
+        // 初期起動
+        processHuffman();
+    </script>
+</body>
+</html>
