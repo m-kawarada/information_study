@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ハフマン符号シミュレーター</title>
+    <title>ピコピコ！ハフマン符号＆ツリーシミュレーター</title>
     <style>
         /* ポップで明るいデザインのベース設定 */
         body {
@@ -32,26 +32,27 @@
             box-shadow: 0 4px 0px #ddd;
             margin-bottom: 20px;
             font-size: 0.9rem;
-            max-width: 600px;
+            max-width: 700px;
             text-align: center;
             border: 2px solid #333;
         }
 
-        /* メインコンテナ（Flexboxで2列/1列を切り替え） */
-        .container {
+        /* メインコンテナ（上部は左右2列、下部は1列にするため、まずは縦並びのベースを定義） */
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* 上部エリア（Flexboxで2列/1列を切り替え） */
+        .top-container {
             display: flex;
             flex-direction: row;
-            gap: 30px;
+            gap: 25px;
             align-items: flex-start;
-            justify-content: center;
-            background: white;
-            padding: 30px;
-            border-radius: 30px;
-            box-shadow: 0 8px 0px #e0b1f5;
-            border: 3px solid #333;
-            max-width: 1000px;
             width: 100%;
-            box-sizing: border-box;
         }
 
         /* 左側：入力エリア */
@@ -70,9 +71,24 @@
             flex: 1.2;
         }
 
+        /* 下部：ツリー表示エリア（横幅いっぱい） */
+        .tree-area {
+            width: 100%;
+        }
+
+        /* 各種共通ボックス */
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 30px;
+            box-shadow: 0 8px 0px #e0b1f5;
+            border: 3px solid #333;
+            box-sizing: border-box;
+        }
+
         textarea {
             width: 100%;
-            height: 100px;
+            height: 90px;
             padding: 15px;
             font-size: 1.1rem;
             border: 3px solid #333;
@@ -89,16 +105,15 @@
             border-color: #7209b7;
         }
 
-        /* 結果表示ボックス */
         .result-box {
             background: #fcf4ff;
             border: 2px solid #333;
             border-radius: 15px;
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        .result-box h3 {
+        .result-box h3, .panel h3 {
             margin: 0 0 10px 0;
             font-size: 1rem;
             color: #333;
@@ -148,18 +163,19 @@
         .freq-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
             background: white;
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .freq-row {
             display: flex;
             align-items: center;
             border-bottom: 1px solid #eee;
-            padding: 6px 10px;
+            padding: 5px 10px;
         }
 
         .freq-char {
@@ -171,7 +187,7 @@
         .freq-bar-container {
             flex: 1;
             background: #f0f0f0;
-            height: 16px;
+            height: 14px;
             border-radius: 8px;
             margin: 0 15px;
             overflow: hidden;
@@ -196,12 +212,12 @@
             background-color: #4cc9f0;
             color: white;
             border: 2px solid #333;
-            padding: 8px 20px;
+            padding: 6px 15px;
             border-radius: 20px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #333;
-            margin-top: 15px;
+            margin-top: 10px;
             align-self: center;
         }
         .clear-btn:active {
@@ -209,46 +225,58 @@
             box-shadow: none;
         }
 
+        /* キャンバスの設定 */
+        .canvas-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #f8f9fa;
+            border: 2px dashed #7209b7;
+            border-radius: 15px;
+            margin-top: 10px;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #fff;
+        }
+
         /* 画面サイズが768px以下の場合のレスポンシブ設定 */
         @media (max-width: 768px) {
-            .container {
+            .top-container {
                 flex-direction: column;
-                padding: 20px;
-            }
-            .input-area, .results-area {
-                width: 100%;
             }
         }
     </style>
 </head>
 <body>
 
-    <h1>英文ハフマン符号化</h1>
+    <h1>ハフマン符号＆ツリー</h1>
     
     <div class="description">
-        英語のメッセージを入力してみよう！🔤<br>
-        よく使う文字ほど「短い暗号（ビット）」に自動で変換される仕組みを見てみよう。
+        英語のメッセージを入力すると、下に**ハフマンツリー（木構造）**が自動で組み立てられるよ！<br>
+        🌳上から枝（0と1）をたどって、文字の暗号ができあがる様子を見てみよう。
     </div>
 
-    <div class="container">
-        
-        <div class="input-area">
-            <h3 style="margin-top:0;">入力メッセージ（半角英数）</h3>
-            <textarea id="text-input" oninput="processHuffman()">HELLO WORLD, WELCOME TO INFORMATION CLASS!</textarea>
-            <button class="clear-btn" onclick="resetText()">元の文章に戻す</button>
+    <div class="main-wrapper">
+        <div class="top-container">
             
-            <div class="result-box" style="margin-top: 25px;">
-                <h3>圧縮されたビット列</h3>
-                <div id="binary-output" class="code-display" style="font-size: 0.9rem;"></div>
+            <div class="input-area panel">
+                <h3>入力メッセージ（半角英数）</h3>
+                <textarea id="text-input" oninput="processHuffman()">HELLO WORLD, WELCOME TO INFORMATION CLASS!</textarea>
+                <button class="clear-btn" onclick="resetText()">元の文章に戻す</button>
+                
+                <div class="result-box" style="margin-top: 20px; margin-bottom: 0;">
+                    <h3>圧縮されたビット列</h3>
+                    <div id="binary-output" class="code-display" style="font-size: 0.85rem; max-height: 120px; overflow-y: auto;"></div>
+                </div>
             </div>
-        </div>
 
-        <div class="results-area">
-            <div class="result-box">
+            <div class="results-area panel">
                 <h3>データ量の比較</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div>元のデータ量<br><small>(固定長: 1文字8つ分として)</small></div>
+                        <div>元のデータ量<br><small>(1文字=8bit固定)</small></div>
                         <div id="original-size" class="stat-val">0 bit</div>
                     </div>
                     <div class="stat-card">
@@ -256,16 +284,23 @@
                         <div id="compressed-size" class="stat-val">0 bit</div>
                     </div>
                 </div>
-                <div id="compression-ratio" style="text-align: center; font-weight: bold; color: #f72585; margin-top: 10px;"></div>
-            </div>
+                <div id="compression-ratio" style="text-align: center; font-weight: bold; color: #f72585; margin-bottom: 15px; font-size: 0.9rem;"></div>
 
-            <div class="result-box">
-                <h3>文字ごとの登場回数と割り当てられた符号</h3>
-                <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">※半角スペースは「[space]」と表示しています。</div>
+                <h3>文字ごとの登場回数と符号</h3>
                 <div id="freq-list"></div>
             </div>
+
         </div>
 
+        <div class="tree-area panel">
+            <h3>自動生成されたハフマンツリー（木構造）</h3>
+            <div style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">
+                最上部の丸からスタートして、左の枝なら「0」、右の枝なら「1」を拾いながら下に進むと、その文字の暗号（符号）になります！
+            </div>
+            <div class="canvas-container">
+                <canvas id="tree-canvas" width="900" height="450"></canvas>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -278,6 +313,10 @@
 
         function processHuffman() {
             const text = document.getElementById('text-input').value;
+            const canvas = document.getElementById('tree-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             if (!text) {
                 document.getElementById('binary-output').innerText = "(文字を入力してください)";
                 document.getElementById('original-size').innerText = "0 bit";
@@ -287,14 +326,14 @@
                 return;
             }
 
-            // 1. 周波数（登場回数）のカウント
+            // 1. 周波数のカウント
             const freqMap = {};
             for (let char of text) {
                 freqMap[char] = (freqMap[char] || 0) + 1;
             }
 
-            // 2. ハフマン木の構築（簡易アルゴリズム）
-            const leaves = Object.keys(freqMap).map(char => ({
+            // 2. 初期ノード（葉）の作成
+            let nodes = Object.keys(freqMap).map(char => ({
                 char: char,
                 freq: freqMap[char],
                 left: null,
@@ -302,20 +341,20 @@
             }));
 
             // 文字が1種類しか無い場合の特殊処理
-            if (leaves.length === 1) {
+            if (nodes.length === 1) {
                 const codes = {};
-                codes[leaves[0].char] = "0";
+                codes[nodes[0].char] = "0";
                 displayResults(text, freqMap, codes);
+                drawSingleNodeTree(ctx, nodes[0].char, nodes[0].freq);
                 return;
             }
 
-            while (leaves.length > 1) {
-                // 頻度の低い順にソート
-                leaves.sort((a, b) => a.freq - b.freq);
+            // 3. ハフマン木の構築
+            while (nodes.length > 1) {
+                nodes.sort((a, b) => a.freq - b.freq);
                 
-                // 最も頻度の低い2つのノードを結合
-                const left = leaves.shift();
-                const right = leaves.shift();
+                const left = nodes.shift();
+                const right = nodes.shift();
                 
                 const parent = {
                     char: null,
@@ -323,10 +362,12 @@
                     left: left,
                     right: right
                 };
-                leaves.push(parent);
+                nodes.push(parent);
             }
 
-            // 3. 木を走査して符号（0と1）を割り当て
+            const root = nodes[0];
+
+            // 4. 符号の割り当て
             const huffmanCodes = {};
             function traverse(node, code) {
                 if (node.char !== null) {
@@ -336,16 +377,17 @@
                 traverse(node.left, code + "0");
                 traverse(node.right, code + "1");
             }
-            if(leaves.length > 0) traverse(leaves[0], "");
+            traverse(root, "");
 
+            // 結果の数字や表を表示
             displayResults(text, freqMap, huffmanCodes);
+
+            // 5. ツリーの描画
+            drawTree(ctx, root, canvas.width / 2, 40, canvas.width / 4, 60);
         }
 
         function displayResults(text, freqMap, codes) {
-            // 元のサイズ（通常、コンピュータ内では1文字＝8ビット[1バイト]で計算するため、生徒にわかりやすく8bit固定長と比較します）
             const origSize = text.length * 8;
-            
-            // 圧縮後のバイナリ生成とサイズ計算
             let binaryStr = "";
             let compSize = 0;
             for (let char of text) {
@@ -357,11 +399,9 @@
             document.getElementById('original-size').innerText = `${origSize} bit`;
             document.getElementById('compressed-size').innerText = `${compSize} bit`;
 
-            // 圧縮率の計算
             const ratio = ((compSize / origSize) * 100).toFixed(1);
             document.getElementById('compression-ratio').innerText = `元のデータ量の約 ${ratio} % に圧縮されました！✨`;
 
-            // 登場頻度リスト（グラフ）の描写
             const sortedChars = Object.keys(freqMap).sort((a, b) => freqMap[b] - freqMap[a]);
             const maxFreq = Math.max(...Object.values(freqMap));
 
@@ -375,16 +415,113 @@
                 freqListHtml += `
                     <div class="freq-row">
                         <div class="freq-char">${displayChar}</div>
-                        <div style="font-size:0.8rem; color:#666; width:30px;">${freq}回</div>
+                        <div style="font-size:0.75rem; color:#666; width:30px;">${freq}回</div>
                         <div class="freq-bar-container">
                             <div class="freq-bar" style="width: ${barWidth}%;"></div>
                         </div>
-                        <div class="freq-code">${code} (${code.length}番)</div>
+                        <div class="freq-code">${code}</div>
                     </div>
                 `;
             });
             freqListHtml += '</div>';
             document.getElementById('freq-list').innerHTML = freqListHtml;
+        }
+
+        // ツリーを描画する関数（再帰呼び出し）
+        function drawTree(ctx, node, x, y, hSpace, vSpace) {
+            if (!node) return;
+
+            // 子ノードがある場合、先に枝（線）を描画
+            if (node.left) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - hSpace, y + vSpace);
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 枝のラベル「0」
+                ctx.fillStyle = "#f72585";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText("0", x - hSpace / 2 - 10, y + vSpace / 2);
+
+                // 左の子へ進む（階層が下がるごとに横の広がりを狭くする）
+                drawTree(ctx, node.left, x - hSpace, y + vSpace, hSpace * 0.5, vSpace);
+            }
+
+            if (node.right) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + hSpace, y + vSpace);
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 枝のラベル「1」
+                ctx.fillStyle = "#4cc9f0";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText("1", x + hSpace / 2 + 5, y + vSpace / 2);
+
+                // 右の子へ進む
+                drawTree(ctx, node.right, x + hSpace, y + vSpace, hSpace * 0.5, vSpace);
+            }
+
+            // 現在のノード（丸）の描画
+            ctx.beginPath();
+            ctx.arc(x, y, 18, 0, 2 * Math.PI);
+            
+            if (node.char !== null) {
+                // 葉ノード（文字が入っている末端）
+                ctx.fillStyle = "#4cc9f0"; 
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 4;
+                ctx.fill();
+                ctx.shadowBlur = 0; // リセット
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 文字の描画
+                ctx.fillStyle = "#333";
+                ctx.font = "bold 14px monospace";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                const disp = node.char === " " ? "_" : node.char; // スペースは見えやすいようにアンダーバーに
+                ctx.fillText(disp, x, y - 2);
+                
+                // 出現回数を丸の下に小さく表示
+                ctx.font = "10px Arial";
+                ctx.fillStyle = "#666";
+                ctx.fillText(`${node.freq}回`, x, y + 28);
+            } else {
+                // 中間ノード（合体したポイント）
+                ctx.fillStyle = "#fff";
+                ctx.fill();
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 合計回数の数値を中に描画
+                ctx.fillStyle = "#7209b7";
+                ctx.font = "11px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(node.freq, x, y);
+            }
+        }
+
+        // 文字が1種類のみの場合の特殊描画
+        function drawSingleNodeTree(ctx, char, freq) {
+            ctx.beginPath();
+            ctx.arc(450, 100, 20, 0, 2 * Math.PI);
+            ctx.fillStyle = "#4cc9f0";
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#333";
+            ctx.font = "bold 16px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(char === " " ? "[space]" : char, 450, 100);
         }
 
         // 初期起動
