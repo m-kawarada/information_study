@@ -114,7 +114,7 @@
         <svg id="svgLayer" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
       </div>
 
-      <!-- パケットヘッダ解体・追跡インスペクター（マルチホップ可視化） -->
+      <!-- パケットヘッダ監視パネル（L2 MAC 付け替え追跡） -->
       <div id="packetInspector" class="bg-slate-900 border-t border-slate-700 text-white p-3 font-mono text-xs z-10 transition-all">
         <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-800">
           <div class="flex items-center gap-2">
@@ -126,7 +126,6 @@
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <!-- イーサネット (L2) ヘッダ -->
           <div class="bg-slate-950 p-2.5 rounded border border-amber-900/40">
             <div class="text-amber-400 font-bold mb-1 flex justify-between">
               <span>【L2】Ethernet Frame (ホップ毎に再カプセル化)</span>
@@ -137,7 +136,6 @@
               <div>宛先 MAC: <span id="hdrDstMac" class="text-amber-300 font-bold">-</span></div>
             </div>
           </div>
-          <!-- IP (L3) ヘッダ -->
           <div class="bg-slate-950 p-2.5 rounded border border-sky-900/40">
             <div class="text-sky-400 font-bold mb-1 flex justify-between">
               <span>【L3】IPv4 Packet (エンドツーエンド通信)</span>
@@ -188,19 +186,19 @@
         <div id="ipConfigSection" class="space-y-2.5">
           <div>
             <label class="block font-semibold text-slate-600 mb-0.5">IPv4 アドレス (IF1)</label>
-            <input type="text" id="cfgIp" placeholder="192.168.1.10" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
+            <input type="text" id="cfgIp" placeholder="192.168.1.10" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div>
             <label class="block font-semibold text-slate-600 mb-0.5">サブネットマスク <span class="text-blue-500 font-normal">(/24 等も可)</span></label>
-            <input type="text" id="cfgMask" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
+            <input type="text" id="cfgMask" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
           </div>
           <div id="gwConfigDiv">
             <label class="block font-semibold text-slate-600 mb-0.5">デフォルトゲートウェイ</label>
-            <input type="text" id="cfgGw" placeholder="192.168.1.1" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
+            <input type="text" id="cfgGw" placeholder="192.168.1.1" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div id="dnsConfigDiv">
             <label class="block font-semibold text-indigo-700 mb-0.5">優先DNSサーバ (IPv4)</label>
-            <input type="text" id="cfgDns" placeholder="例: 192.168.1.53" class="w-full border border-indigo-200 bg-indigo-50/30 rounded px-2 py-1.5 focus:border-indigo-500 focus:outline-none" oninput="updateCurrentNode()">
+            <input type="text" id="cfgDns" placeholder="例: 192.168.1.53" class="w-full border border-indigo-200 bg-indigo-50/30 rounded px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
         </div>
 
@@ -213,11 +211,11 @@
           </div>
           <div>
             <label class="block font-semibold text-slate-600 mb-0.5">IF2 IPv4 アドレス</label>
-            <input type="text" id="cfgIp2" placeholder="192.168.2.1" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
+            <input type="text" id="cfgIp2" placeholder="192.168.2.1" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div>
             <label class="block font-semibold text-slate-600 mb-0.5">IF2 サブネットマスク</label>
-            <input type="text" id="cfgMask2" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
+            <input type="text" id="cfgMask2" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
           </div>
         </div>
 
@@ -398,8 +396,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'simple_tcpip_sim_v10';
-    const QUIZ_STORAGE_KEY = 'simple_tcpip_quizzes_v3';
+    const STORAGE_KEY = 'simple_tcpip_sim_v11';
+    const QUIZ_STORAGE_KEY = 'simple_tcpip_quizzes_v4';
 
     let devices = [];
     let links = [];
@@ -424,7 +422,6 @@
       return `${prefixHex}:${byte()}:${byte()}:${byte()}`;
     }
 
-    // 課題データ（第6問にルータ間通信・MAC付け替え課題を追加）
     const DEFAULT_QUIZZES = [
       {
         id: 'quiz_1',
@@ -540,9 +537,7 @@
         data: {
           devices: [
             { id: 'q6_pc1', type: 'PC', name: 'PC-1', x: 50, y: 140, ip: '192.168.1.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:66:01:01' },
-            // Router-A (IF1: LAN側 192.168.1.1, IF2: WAN側 10.0.0.1) -> ルート未設定ミス
             { id: 'q6_ra', type: 'Router', name: 'Router-A', x: 210, y: 140, ip: '192.168.1.1', mask: '255.255.255.0', ip2: '10.0.0.1', mask2: '255.255.255.0', routes: [], arpTable: {}, mac: '00:1A:2B:66:02:01', mac2: '00:1A:2C:66:02:02' },
-            // Router-B (IF1: WAN側 10.0.0.2, IF2: LAN側 192.168.3.1) -> 戻りルート(192.168.1.0/24 -> 10.0.0.1)は設定済み
             { id: 'q6_rb', type: 'Router', name: 'Router-B', x: 380, y: 140, ip: '10.0.0.2', mask: '255.255.255.0', ip2: '192.168.3.1', mask2: '255.255.255.0', routes: [{ dest: '192.168.1.0', mask: '255.255.255.0', nextHop: '10.0.0.1' }], arpTable: {}, mac: '00:1A:2B:66:03:01', mac2: '00:1A:2C:66:03:02' },
             { id: 'q6_sv1', type: 'Server', name: 'Server-1', x: 540, y: 140, ip: '192.168.3.10', mask: '255.255.255.0', gw: '192.168.3.1', dns: '', arpTable: {}, mac: '00:1A:2B:66:04:01' }
           ],
@@ -802,7 +797,7 @@
         mask2: type === 'Router' ? '255.255.255.0' : '',
         mac2: type === 'Router' ? generateMac('00:1A:2C') : '',
         arpTable: {},
-        routes: type === 'Router' ? [] : undefined, // 静的ルーティングテーブル [{ dest, mask, nextHop }]
+        routes: type === 'Router' ? [] : undefined,
         dnsRecords: type === 'DNSServer' ? { 'example.com': '192.168.2.100' } : {}
       };
 
@@ -1053,12 +1048,10 @@
       renderAll();
     }
 
-    // --- ルーティングテーブル管理（ルータ専用） ---
     function renderRoutingTable(routerDev) {
       const container = document.getElementById('routingTableList');
       container.innerHTML = '';
 
-      // 直結ルートの自動表示
       const autoRoutes = [
         { dest: intToIp((ipToInt(routerDev.ip) & ipToInt(routerDev.mask)) >>> 0), mask: routerDev.mask, ifName: 'IF1 (直結)' }
       ];
@@ -1073,7 +1066,6 @@
         container.appendChild(item);
       });
 
-      // 静的ルート
       const routes = routerDev.routes || [];
       routes.forEach((r, idx) => {
         const item = document.createElement('div');
@@ -1478,7 +1470,6 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // --- パケットヘッダ監視パネル更新 ---
     function updatePacketInspector(hopTitle, srcMac, dstMac, srcIp, dstIp, ttl) {
       document.getElementById('inspectHopBadge').textContent = hopTitle;
 
@@ -1491,10 +1482,9 @@
       document.getElementById('hdrDstIp').textContent = dstIp;
       document.getElementById('hdrTtl').textContent = ttl;
 
-      // MAC付け替え強調アニメーション
       srcMacEl.classList.remove('mac-change');
       dstMacEl.classList.remove('mac-change');
-      void srcMacEl.offsetWidth; // reflow
+      void srcMacEl.offsetWidth;
       srcMacEl.classList.add('mac-change');
       dstMacEl.classList.add('mac-change');
     }
@@ -1560,7 +1550,7 @@
       addLog(`💾 [ARP Cache更新] ${senderDev.name} に [${targetIp} ➔ ${targetMac}] を登録。`, 'text-emerald-300');
     }
 
-    // ルータのNext Hopまたは直結IFを割り出すルーティング関数
+    // ★ バグ修正：NextHopのキー名を nextHop と nextHopIp の両方に対応
     function resolveRouterNextHop(router, destIp) {
       // 1. 直結チェック
       if (isSameSubnet(router.ip, destIp, router.mask)) {
@@ -1590,22 +1580,21 @@
       });
 
       if (bestMatch) {
-        // Next Hop IPがどのIF側にあるかを判定
+        // キー名の揺らぎを吸収 (nextHop または nextHopIp)
+        const hopIp = bestMatch.nextHop || bestMatch.nextHopIp;
         let egressIfIp = router.ip;
         let egressMac = router.mac;
-        if (router.ip2 && isSameSubnet(router.ip2, bestMatch.nextHopIp, router.mask2)) {
+        if (router.ip2 && isSameSubnet(router.ip2, hopIp, router.mask2)) {
           egressIfIp = router.ip2;
           egressMac = router.mac2;
         }
-        return { type: 'NEXT_HOP', egressIfIp, egressMac, nextHopIp: bestMatch.nextHopIp };
+        return { type: 'NEXT_HOP', egressIfIp, egressMac, nextHopIp: hopIp };
       }
 
       return null;
     }
 
-    // --- ★ ホップ毎のパケット転送＆ヘッダ付け替え処理 ---
     async function forwardHop(fromDev, toDev, egressMac, ingressMac, packetMeta, hopDesc) {
-      // インスペクター表示を更新
       updatePacketInspector(
         hopDesc,
         egressMac,
@@ -1621,7 +1610,6 @@
         return false;
       }
 
-      // ARP解決が必要なら実行
       const nextIp = packetMeta.currentNextIp;
       if (!fromDev.arpTable || !fromDev.arpTable[nextIp]) {
         addLog(`⚡ [ARP] ${fromDev.name} が ${nextIp} のMACアドレスを問い合わせます...`, 'text-amber-200');
@@ -1633,13 +1621,12 @@
       return true;
     }
 
-    // --- 汎用マルチホップ転送エンジン（往復対応） ---
+    // --- ★ 往復マルチホップ転送エンジン ---
     async function routeMultiHop(srcDev, dstDev, reqColor = '#38bdf8', resColor = '#4ade80') {
-      // 1. 同一LAN（直接通信）
+      // 1. 同一LAN
       if (isSameSubnet(srcDev.ip, dstDev.ip, srcDev.mask)) {
         addLog(`ℹ️ [同一セグメント] 送信元と宛先は同一LAN内です（ルータ不要）。`, 'text-slate-300');
 
-        // 行き
         const fwdOk = await forwardHop(srcDev, dstDev, srcDev.mac, dstDev.mac, {
           srcIp: srcDev.ip,
           dstIp: dstDev.ip,
@@ -1649,13 +1636,11 @@
         }, `直接通信: ${srcDev.name} ➔ ${dstDev.name}`);
         if (!fwdOk) return false;
 
-        // 宛先側サブネット検証
         if (!isSameSubnet(dstDev.ip, srcDev.ip, dstDev.mask)) {
           addLog(`❌【戻り失敗】${dstDev.name} のサブネットマスク設定により、返信パケットを戻せません。`, 'text-rose-400 font-bold');
           return false;
         }
 
-        // 戻り
         const retOk = await forwardHop(dstDev, srcDev, dstDev.mac, srcDev.mac, {
           srcIp: dstDev.ip,
           dstIp: srcDev.ip,
@@ -1666,7 +1651,7 @@
         return retOk;
       }
 
-      // 2. ルータ経由（1ホップまたは複数ホップ）
+      // 2. 外部ネットワーク
       if (!srcDev.gw) {
         addLog(`❌【GW未設定】${srcDev.name} にデフォルトゲートウェイが設定されていません。`, 'text-rose-400');
         return false;
@@ -1676,7 +1661,6 @@
         return false;
       }
 
-      // 最初のルータを特定
       let currentRouter = devices.find(d => d.type === 'Router' && (d.ip === srcDev.gw || d.ip2 === srcDev.gw));
       if (!currentRouter) {
         addLog(`❌【通信不可】DG (${srcDev.gw}) を持つルータがネットワーク上に存在しません。`, 'text-rose-400');
@@ -1685,7 +1669,7 @@
 
       const routerIngressMac = (currentRouter.ip === srcDev.gw) ? currentRouter.mac : currentRouter.mac2;
 
-      // === 行き（Echo Request）のホップ追跡 ===
+      // === 行き（Echo Request） ===
       let packet = {
         srcIp: srcDev.ip,
         dstIp: dstDev.ip,
@@ -1694,7 +1678,6 @@
         color: reqColor
       };
 
-      // ホップ 1: PC ➔ 最初のルータ
       let ok = await forwardHop(srcDev, currentRouter, srcDev.mac, routerIngressMac, packet, `ホップ 1: ${srcDev.name} ➔ ${currentRouter.name}`);
       if (!ok) return false;
 
@@ -1703,22 +1686,19 @@
       let traversedHops = [{ from: srcDev, to: currentRouter, egressMac: srcDev.mac, ingressMac: routerIngressMac }];
 
       while (true) {
-        // ルータ内部でTTLデクリメント
         packet.ttl--;
         if (packet.ttl <= 0) {
-          addLog(`❌【TTL枯渇】Time To Live が0になりました（ルーティングループの可能性）。`, 'text-rose-400');
+          addLog(`❌【TTL枯渇】Time To Live が0になりました。`, 'text-rose-400');
           return false;
         }
 
-        // ルーティング検索
         const routeResult = resolveRouterNextHop(currentRouter, dstDev.ip);
         if (!routeResult) {
-          addLog(`❌【ルーティング失敗】${currentRouter.name} に宛先 (${dstDev.ip}) への経路（直結または静的ルート）がありません。`, 'text-rose-400 font-bold');
+          addLog(`❌【ルーティング失敗】${currentRouter.name} に宛先 (${dstDev.ip}) への経路がありません。`, 'text-rose-400 font-bold');
           return false;
         }
 
         if (routeResult.type === 'DIRECT') {
-          // 宛先に直結到達
           hopCount++;
           packet.currentNextIp = dstDev.ip;
           ok = await forwardHop(currentRouter, dstDev, routeResult.egressMac, dstDev.mac, packet, `ホップ ${hopCount} (最終): ${currentRouter.name} ➔ ${dstDev.name}`);
@@ -1726,14 +1706,13 @@
           traversedHops.push({ from: currentRouter, to: dstDev, egressMac: routeResult.egressMac, ingressMac: dstDev.mac });
           break;
         } else {
-          // Next Hop ルータへ中継
           const nextHopRouter = devices.find(d => d.type === 'Router' && (d.ip === routeResult.nextHopIp || d.ip2 === routeResult.nextHopIp));
           if (!nextHopRouter) {
             addLog(`❌【NextHop到達不能】${currentRouter.name} が指定したNext Hop (${routeResult.nextHopIp}) を持つルータが存在しません。`, 'text-rose-400');
             return false;
           }
           if (visitedRouters.has(nextHopRouter.id)) {
-            addLog(`❌【ルーティングループ】ルータ ${nextHopRouter.name} で経路ループを検出しました。`, 'text-rose-400 font-bold');
+            addLog(`❌【ルーティングループ】ルータ ${nextHopRouter.name} でループを検出しました。`, 'text-rose-400 font-bold');
             return false;
           }
 
@@ -1751,10 +1730,16 @@
         }
       }
 
-      // === 戻り（Echo Reply）の検証とアニメーション ===
+      // === 戻り（Echo Reply） ===
       addLog(`📦 [受信完了] ${dstDev.name} がパケットを受信。応答(Echo Reply)を返信します...`);
 
-      // 逆順ホップをアニメーション
+      if (dstDev.type !== 'Router') {
+        if (!dstDev.gw) {
+          addLog(`❌【戻り失敗】${dstDev.name} にデフォルトゲートウェイが未設定です。`, 'text-rose-400');
+          return false;
+        }
+      }
+
       let replyPacket = {
         srcIp: dstDev.ip,
         dstIp: srcDev.ip,
@@ -1790,7 +1775,7 @@
       resetPacketInspector();
 
       if (!srcId || !dstRaw) {
-        addLog('【エラー】送信元と宛先（機器名またはドメイン）を入力してください。', 'text-amber-400');
+        addLog('【エラー】送信元と宛先を入力してください。', 'text-amber-400');
         return;
       }
 
@@ -1803,7 +1788,6 @@
 
       addLog(`▶ [リクエスト開始] 送信元: ${src.name} (${src.ip}) ──> 宛先: ${dstRaw}`, 'text-blue-300 font-bold');
 
-      // IP競合スキャン
       const ipCounts = {};
       devices.forEach(d => {
         if (d.type === 'Switch') return;
@@ -1812,7 +1796,7 @@
       });
 
       if (ipCounts[src.ip] > 1) {
-        addLog(`❌【IP競合】送信元 ${src.name} のIP (${src.ip}) はネットワーク内の他機器と重複しています！`, 'text-rose-400 font-bold');
+        addLog(`❌【IP競合】送信元 ${src.name} のIP (${src.ip}) は重複しています！`, 'text-rose-400 font-bold');
         pingBtn.disabled = false;
         pingBtn.classList.remove('opacity-50');
         return;
@@ -1828,7 +1812,6 @@
         targetIp = dstRaw;
         dst = devices.find(d => d.ip === targetIp || (d.type === 'Router' && d.ip2 === targetIp));
       } else {
-        // DNS名前解決
         const domain = dstRaw.toLowerCase();
         addLog(`🔤 [名前解決要求] "${domain}" はドメイン名です。DNS解決を開始します...`, 'text-indigo-300 font-bold');
 
@@ -1898,7 +1881,6 @@
         return;
       }
 
-      // マルチホップ実通信実行
       const commOk = await routeMultiHop(src, dst, '#38bdf8', '#4ade80');
       if (commOk) {
         addLog(`🎉【通信成功】${src.name} ──> ${dst.name} (${targetIp}) への往復アクセスが完了しました！`, 'text-emerald-400 font-bold');
