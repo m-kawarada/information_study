@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>偽Wi-Fi＆パケット盗聴体験シミュレーター</title>
+    <title>偽Wi-Fi＆パケット盗聴・改ざん体験シミュレーター</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow-x: hidden; touch-action: none; background-color: #1a1a2e; color: #fff; }
-        
         .canvas-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0f172a; }
         .draggable {
             position: absolute; cursor: grab; user-select: none; -webkit-user-select: none;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); z-index: 10; will-change: left, top;
         }
         .draggable.is-dragging { cursor: grabbing !important; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 50; }
-        svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        
+        svg.network-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .console-box { overflow-y: auto; scroll-behavior: smooth; font-family: monospace; }
         
         @keyframes shake {
@@ -40,6 +38,10 @@
         }
         .flash-red { animation: flashRed 0.5s ease-in-out; }
         
+        /* DNS Spoofing Alert Animation */
+        @keyframes pulseRed { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .spoofing-active { border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.8); animation: pulseRed 2s infinite; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
@@ -47,26 +49,25 @@
 <body class="h-screen flex flex-col font-sans select-none">
 
     <header class="bg-slate-900 border-b border-slate-700 p-3 flex justify-between items-center shadow-lg z-50">
-        <h1 class="text-lg font-bold text-blue-400">🚨 Evil Twin Attack (偽Wi-Fi) シミュレーター</h1>
+        <h1 class="text-lg font-bold text-blue-400">🚨 偽Wi-Fi＆DNSスプーフィング シミュレーター</h1>
         <button onclick="resetState()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1 rounded text-sm transition border border-slate-500">配置リセット</button>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
         
         <!-- ==========================================
-             左側：被害者のPC画面 (Mock OS)
+             左側：被害者のPC画面
              ========================================== -->
         <div id="victim-pc" class="w-1/2 relative flex flex-col bg-cover bg-center border-r border-slate-700 shadow-2xl transition-all" style="background-image: url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop');">
             
             <div id="hacked-overlay" class="absolute inset-0 bg-red-600/30 hidden z-40 pointer-events-none flex items-center justify-center">
-                <div class="bg-black/80 text-red-500 text-4xl font-mono font-bold p-6 border-4 border-red-500 rounded-lg">
-                    ⚠ CRITICAL DATA COMPROMISED
+                <div class="bg-black/80 text-red-500 text-3xl font-mono font-bold p-6 border-4 border-red-500 rounded-lg text-center">
+                    ⚠ CRITICAL DATA COMPROMISED<br>
+                    <span class="text-sm text-white mt-2 block">フィッシングサイトへ送信されました</span>
                 </div>
             </div>
 
-            <!-- ブラウザウィンドウ -->
             <div class="absolute top-8 bottom-16 left-1/2 transform -translate-x-1/2 w-11/12 max-w-lg bg-white text-black rounded-lg shadow-2xl overflow-hidden flex flex-col">
-                
                 <!-- アドレスバー -->
                 <div class="bg-gray-200 p-2 flex items-center gap-2 border-b">
                     <div class="flex gap-1 mr-2">
@@ -79,50 +80,48 @@
                     <div class="flex-1 bg-white border rounded px-2 py-1 text-xs flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition" onclick="toggleProtocol()">
                         <span id="protocol-icon" class="text-gray-400">🔓</span>
                         <span id="protocol-text" class="text-gray-500 font-mono">http://<span id="url-domain">mockgle.com</span></span>
-                        <span class="ml-auto text-blue-500 text-[10px]">クリックで暗号化切替</span>
+                        <span class="ml-auto text-blue-500 text-[10px] hidden" id="hint-toggle">クリックで暗号化切替</span>
                     </div>
                 </div>
 
-                <!-- コンテンツ領域 -->
                 <div class="relative flex-1 bg-white overflow-y-auto">
-                    
-                    <!-- 【画面1】検索エンジン (Mockgle) -->
+                    <!-- 検索画面 -->
                     <div id="screen-search" class="absolute inset-0 p-6 flex flex-col items-center pt-20 transition-opacity duration-300">
                         <h2 class="text-5xl font-bold mb-8 tracking-tighter">
                             <span class="text-blue-500">M</span><span class="text-red-500">o</span><span class="text-yellow-500">c</span><span class="text-blue-500">k</span><span class="text-green-500">g</span><span class="text-red-500">l</span><span class="text-yellow-500">e</span>
                         </h2>
                         <div class="w-full relative max-w-sm mb-6">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-400">🔍</span>
-                            </div>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-400">🔍</span></div>
                             <input type="text" id="searchQuery" placeholder="検索キーワードを入力" class="w-full border border-gray-300 pl-10 p-3 rounded-full text-sm focus:ring-2 focus:ring-blue-200 outline-none shadow-sm" value="社内システム ログイン">
                         </div>
-                        <button onclick="executeSearch()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded text-sm transition">
-                            Mockgle 検索
-                        </button>
+                        <button onclick="executeSearch()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded text-sm transition">Mockgle 検索</button>
                         
-                        <!-- 検索結果 (最初は非表示) -->
                         <div id="search-results" class="hidden w-full max-w-sm mt-8 text-left border-t pt-4">
                             <p class="text-[10px] text-gray-400 mb-2">約 1 件の検索結果</p>
                             <div class="cursor-pointer hover:bg-gray-50 p-3 rounded-lg border border-transparent hover:border-gray-200 transition" onclick="navigate('login')">
                                 <div class="text-[11px] text-gray-500 mb-1">example.com > login</div>
                                 <div class="text-base text-blue-600 hover:underline font-bold mb-1">社内ポータル / メンバーログイン</div>
-                                <div class="text-xs text-gray-600 line-clamp-2">ここから社内の機密情報システムおよび無料Wi-Fiサービスへアクセスできます。IDとパスワードを入力してください。</div>
+                                <div class="text-xs text-gray-600 line-clamp-2">ここから社内の機密情報システムへアクセスできます。IDとパスワードを入力してください。</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 【画面2】ログイン画面 -->
+                    <!-- ログイン画面 -->
                     <div id="screen-login" class="absolute inset-0 p-6 bg-slate-50 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 hidden">
-                        <div class="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm text-center">
-                            <h2 class="text-xl font-bold text-slate-700 mb-1">MEMBER LOGIN</h2>
+                        <div class="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm text-center relative overflow-hidden">
+                            <!-- フィッシング時の警告帯（本来は見えない設定） -->
+                            <div id="phishing-banner" class="absolute top-0 left-0 w-full bg-red-600 text-white text-[10px] py-1 hidden">
+                                ⚠ よく見るとURLの「l(エル)」が「1(イチ)」になっています
+                            </div>
+
+                            <h2 class="text-xl font-bold text-slate-700 mb-1 mt-2">MEMBER LOGIN</h2>
                             <p class="text-xs text-slate-500 mb-6">システムへログインしてください</p>
                             
                             <input type="text" id="loginId" placeholder="ユーザーID (例: admin)" class="w-full border p-2 mb-3 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="taro_yamada">
                             
                             <div class="relative mb-6">
                                 <input type="password" id="loginPw" placeholder="パスワード" class="w-full border p-2 pr-10 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="secret_pass_123">
-                                <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
                                     <svg id="eye-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                     <svg id="eye-slash-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                                 </button>
@@ -133,7 +132,6 @@
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -161,9 +159,6 @@
                             </div>
                             <span id="check-fake" class="text-red-400 font-bold hidden">✓</span>
                         </button>
-                        <div class="text-[9px] text-slate-500 mt-2 p-1 bg-slate-900 rounded">
-                            ※攻撃者はよく似た名前、あるいは全く同じSSIDで罠を仕掛けます。
-                        </div>
                     </div>
                 </div>
             </div>
@@ -175,26 +170,43 @@
         <div class="w-1/2 flex flex-col bg-slate-900 border-l border-slate-700 relative">
             
             <div class="h-1/2 relative canvas-container border-b border-slate-700 shadow-inner" id="canvas">
-                <div class="absolute top-2 left-2 text-xs font-bold text-slate-500 pointer-events-none z-0">🌐 ネットワークトポロジー (ドラッグで移動可)</div>
-                <svg id="linesSvg">
+                <div class="absolute top-2 left-2 text-xs font-bold text-slate-500 pointer-events-none z-0">🌐 トポロジー (ドラッグ可)</div>
+                
+                <svg id="linesSvg" class="network-lines">
+                    <!-- PC からルーター -->
                     <line id="line-pc" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" />
-                    <line id="line-real" stroke="#10b981" stroke-width="2" />
-                    <line id="line-fake" stroke="#ef4444" stroke-width="2" />
+                    <!-- ルーター から インターネット -->
+                    <line id="line-r-i" stroke="#10b981" stroke-width="2" />
+                    <line id="line-f-i" stroke="#ef4444" stroke-width="2" />
+                    <!-- インターネット から 本物サーバー -->
+                    <line id="line-i-s" stroke="#8b5cf6" stroke-width="2" />
+                    <!-- 偽ルーター から 偽サーバー (DNSスプーフィング時) -->
+                    <line id="line-f-fs" stroke="#f97316" stroke-width="2" stroke-dasharray="6,6" class="hidden" />
                 </svg>
-                <div id="device-pc" class="draggable bg-blue-900/80 border border-blue-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">💻 ユーザーPC</div>
-                <div id="device-realWifi" class="draggable bg-green-900/80 border border-green-400 rounded p-2 w-28 text-center text-white text-xs backdrop-blur">📶 本物ルーター</div>
-                <div id="device-fakeWifi" class="draggable bg-red-900/80 border border-red-500 rounded p-2 w-28 text-center text-white text-xs backdrop-blur shadow-[0_0_15px_rgba(239,68,68,0.3)]">🦹‍♂️ 偽装ルーター<br><span class="text-[8px] text-red-200">Packet Sniffer起動中</span></div>
-                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">🗄️️ Webサーバー</div>
+
+                <div id="device-pc" class="draggable bg-blue-900/80 border border-blue-400 rounded p-2 w-20 text-center text-white text-[10px] backdrop-blur">💻 ユーザーPC</div>
+                
+                <div id="device-realWifi" class="draggable bg-green-900/80 border border-green-400 rounded p-2 w-24 text-center text-white text-[10px] backdrop-blur">📶 本物ルーター</div>
+                <div id="device-fakeWifi" class="draggable bg-red-900/80 border border-red-500 rounded p-2 w-24 text-center text-white text-[10px] backdrop-blur">🦹‍♂️ 偽装ルーター<br><span id="fake-router-status" class="text-[8px] text-red-200">Sniffer待機中</span></div>
+                
+                <div id="device-internet" class="draggable bg-slate-800/80 border border-slate-400 rounded-full p-3 w-28 text-center text-white text-xs backdrop-blur shadow-lg">☁️ インターネット</div>
+                
+                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-[10px] backdrop-blur">🗄️ 本物Webサーバ<br><span class="text-[8px] text-purple-300">example.com</span></div>
+                <div id="device-fakeServer" class="draggable bg-orange-900/80 border border-orange-500 rounded p-2 w-24 text-center text-white text-[10px] backdrop-blur shadow-[0_0_15px_rgba(249,115,22,0.3)]">😈 偽Webサーバ<br><span class="text-[8px] text-orange-300">フィッシング用</span></div>
             </div>
 
+            <!-- 下半分：ログコンソール -->
             <div class="h-1/2 flex bg-black font-mono text-xs overflow-hidden">
                 <div class="w-1/2 border-r border-slate-800 flex flex-col">
                     <div class="bg-slate-900 p-1 px-2 border-b border-red-900 text-red-500 font-bold flex justify-between items-center">
-                        <span>>_ attacker_terminal.sh</span>
-                        <span class="animate-pulse text-[10px]">🟢 REC</span>
+                        <span>>_ attacker_terminal</span>
+                        <!-- ★ DNSスプーフィングのトグルボタン -->
+                        <button onclick="toggleDnsSpoofing()" id="btn-dns" class="bg-slate-800 border border-red-800 hover:bg-red-900 text-white text-[10px] px-2 py-1 rounded transition flex items-center gap-1">
+                            DNSスプーフィング攻撃: <span id="dns-status" class="text-gray-500">OFF</span>
+                        </button>
                     </div>
                     <div id="attackerLog" class="console-box flex-1 p-2 text-slate-300">
-                        <span class="text-slate-600">Starting packet sniffer on wlan0mon...<br>Waiting for victims to connect...<br></span>
+                        <span class="text-slate-600">Starting packet sniffer on wlan0mon...<br>Waiting for victims...<br></span>
                     </div>
                 </div>
                 <div class="w-1/2 flex flex-col">
@@ -213,23 +225,31 @@
 
     <script>
         // --- 状態管理 ---
-        const STORAGE_KEY = 'wifiSimStateV4';
+        const STORAGE_KEY = 'wifiSimStateV5';
         let state = {
             positions: {
-                pc: { x: 40, y: 50 }, realWifi: { x: 220, y: 20 },
-                fakeWifi: { x: 220, y: 150 }, server: { x: 420, y: 80 }
+                pc: { x: 20, y: 100 },
+                realWifi: { x: 150, y: 30 },
+                fakeWifi: { x: 150, y: 170 },
+                internet: { x: 300, y: 100 },
+                server: { x: 450, y: 30 },
+                fakeServer: { x: 450, y: 170 }
             },
             connection: 'real',
             protocol: 'http',
-            currentScreen: 'search'
+            currentScreen: 'search',
+            dnsSpoofing: false // ★ 新機能：能動的攻撃のフラグ
         };
 
         const elements = {
             pc: document.getElementById('device-pc'), realWifi: document.getElementById('device-realWifi'),
-            fakeWifi: document.getElementById('device-fakeWifi'), server: document.getElementById('device-server')
+            fakeWifi: document.getElementById('device-fakeWifi'), internet: document.getElementById('device-internet'),
+            server: document.getElementById('device-server'), fakeServer: document.getElementById('device-fakeServer')
         };
         const lines = {
-            pc: document.getElementById('line-pc'), real: document.getElementById('line-real'), fake: document.getElementById('line-fake')
+            pc: document.getElementById('line-pc'), ri: document.getElementById('line-r-i'),
+            fi: document.getElementById('line-f-i'), is: document.getElementById('line-i-s'),
+            ffs: document.getElementById('line-f-fs')
         };
         let elementDims = {};
 
@@ -248,6 +268,7 @@
                     if (parsed.positions) state.positions = { ...state.positions, ...parsed.positions };
                     if (parsed.connection) state.connection = parsed.connection;
                     if (parsed.protocol) state.protocol = parsed.protocol;
+                    if (parsed.dnsSpoofing !== undefined) state.dnsSpoofing = parsed.dnsSpoofing;
                 } catch(e) {}
             }
             Object.keys(elements).forEach(key => {
@@ -294,89 +315,123 @@
         });
 
         function updateLines() {
-            const getCenter = (key) => ({
-                x: state.positions[key].x + (elementDims[key]?.w || 100) / 2, y: state.positions[key].y + (elementDims[key]?.h || 40) / 2
-            });
-            const pC = getCenter('pc'), rC = getCenter('realWifi'), fC = getCenter('fakeWifi'), sC = getCenter('server');
-            lines.real.setAttribute('x1', rC.x); lines.real.setAttribute('y1', rC.y); lines.real.setAttribute('x2', sC.x); lines.real.setAttribute('y2', sC.y);
-            lines.fake.setAttribute('x1', fC.x); lines.fake.setAttribute('y1', fC.y); lines.fake.setAttribute('x2', sC.x); lines.fake.setAttribute('y2', sC.y);
-            lines.pc.setAttribute('x1', pC.x); lines.pc.setAttribute('y1', pC.y);
+            const getC = (k) => ({ x: state.positions[k].x + (elementDims[k]?.w || 80)/2, y: state.positions[k].y + (elementDims[k]?.h || 40)/2 });
+            const p = getC('pc'), r = getC('realWifi'), f = getC('fakeWifi'), i = getC('internet'), s = getC('server'), fs = getC('fakeServer');
+
+            // PC -> Router
+            lines.pc.setAttribute('x1', p.x); lines.pc.setAttribute('y1', p.y);
             if (state.connection === 'real') {
-                lines.pc.setAttribute('x2', rC.x); lines.pc.setAttribute('y2', rC.y); lines.pc.setAttribute('stroke', '#10b981');
+                lines.pc.setAttribute('x2', r.x); lines.pc.setAttribute('y2', r.y); lines.pc.setAttribute('stroke', '#10b981');
             } else {
-                lines.pc.setAttribute('x2', fC.x); lines.pc.setAttribute('y2', fC.y); lines.pc.setAttribute('stroke', '#ef4444');
+                lines.pc.setAttribute('x2', f.x); lines.pc.setAttribute('y2', f.y); lines.pc.setAttribute('stroke', '#ef4444');
+            }
+
+            // Real Router -> Internet -> Real Server
+            lines.ri.setAttribute('x1', r.x); lines.ri.setAttribute('y1', r.y); lines.ri.setAttribute('x2', i.x); lines.ri.setAttribute('y2', i.y);
+            lines.is.setAttribute('x1', i.x); lines.is.setAttribute('y1', i.y); lines.is.setAttribute('x2', s.x); lines.is.setAttribute('y2', s.y);
+
+            // Fake Router Routing (DNS Spoofing ON vs OFF)
+            if (state.dnsSpoofing && state.currentScreen === 'login') {
+                // DNSスプーフィング有効＋ログイン画面：偽ルーターから偽サーバーへ直結
+                lines.fi.classList.add('hidden');
+                lines.ffs.classList.remove('hidden');
+                lines.ffs.setAttribute('x1', f.x); lines.ffs.setAttribute('y1', f.y); lines.ffs.setAttribute('x2', fs.x); lines.ffs.setAttribute('y2', fs.y);
+            } else {
+                // 通常時：偽ルーターからインターネット（盗聴のみ）
+                lines.fi.classList.remove('hidden');
+                lines.ffs.classList.add('hidden');
+                lines.fi.setAttribute('x1', f.x); lines.fi.setAttribute('y1', f.y); lines.fi.setAttribute('x2', i.x); lines.fi.setAttribute('y2', i.y);
             }
         }
 
-        // --- ブラウザ・UI 操作 ---
+        // --- DNS Spoofing 制御 ---
+        function toggleDnsSpoofing() {
+            state.dnsSpoofing = !state.dnsSpoofing;
+            updateUI(); updateLines(); saveState();
+            typeWriterLog('attackerLog', state.dnsSpoofing 
+                ? `<span class="text-orange-400 font-bold">>>> [ACTIVE] DNS Cache Poisoning Started. Redirecting example.com to Phishing IP.</span>`
+                : `<span class="text-gray-500">>>> [STOPPED] DNS Spoofing disabled. Normal routing restored.</span>`);
+        }
+
+        // --- UI 操作 ---
         function toggleWifiMenu() { document.getElementById('wifi-menu').classList.toggle('hidden'); }
         function selectWifi(type) { state.connection = type; document.getElementById('wifi-menu').classList.add('hidden'); updateUI(); updateLines(); saveState(); }
+        
+        // プロトコル切り替え（フィッシング中は強制的にHTTPSに見せかける事も多いので固定可能だが、学習用にトグル可能にする）
         function toggleProtocol() { state.protocol = (state.protocol === 'http') ? 'https' : 'http'; updateUI(); saveState(); }
         
         function togglePasswordVisibility() {
-            const pwInput = document.getElementById('loginPw');
-            const eyeIcon = document.getElementById('eye-icon'), eyeSlashIcon = document.getElementById('eye-slash-icon');
-            if (pwInput.type === 'password') {
-                pwInput.type = 'text'; eyeIcon.classList.add('hidden'); eyeSlashIcon.classList.remove('hidden');
-            } else {
-                pwInput.type = 'password'; eyeIcon.classList.remove('hidden'); eyeSlashIcon.classList.add('hidden');
-            }
+            const pw = document.getElementById('loginPw'), icon = document.getElementById('eye-icon'), iconS = document.getElementById('eye-slash-icon');
+            if (pw.type === 'password') { pw.type = 'text'; icon.classList.add('hidden'); iconS.classList.remove('hidden'); }
+            else { pw.type = 'password'; icon.classList.remove('hidden'); iconS.classList.add('hidden'); }
         }
 
         function navigate(targetScreen) {
-            const searchScreen = document.getElementById('screen-search');
-            const loginScreen = document.getElementById('screen-login');
-            const btnBack = document.getElementById('btn-back');
-            const domainText = document.getElementById('url-domain');
-
+            const searchScreen = document.getElementById('screen-search'), loginScreen = document.getElementById('screen-login');
+            
             if(targetScreen === 'login') {
                 state.currentScreen = 'login';
                 searchScreen.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
-                    searchScreen.classList.add('hidden');
-                    loginScreen.classList.remove('hidden');
-                    void loginScreen.offsetWidth;
-                    loginScreen.classList.remove('opacity-0', 'pointer-events-none');
+                    searchScreen.classList.add('hidden'); loginScreen.classList.remove('hidden');
+                    void loginScreen.offsetWidth; loginScreen.classList.remove('opacity-0', 'pointer-events-none');
                 }, 300);
-                domainText.innerText = 'example.com/login';
-                btnBack.classList.remove('opacity-50', 'cursor-not-allowed');
-                btnBack.classList.add('hover:bg-gray-300', 'cursor-pointer');
-            } else if (targetScreen === 'search') {
+            } else {
                 state.currentScreen = 'search';
                 loginScreen.classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
-                    loginScreen.classList.add('hidden');
-                    searchScreen.classList.remove('hidden');
-                    void searchScreen.offsetWidth;
-                    searchScreen.classList.remove('opacity-0', 'pointer-events-none');
+                    loginScreen.classList.add('hidden'); searchScreen.classList.remove('hidden');
+                    void searchScreen.offsetWidth; searchScreen.classList.remove('opacity-0', 'pointer-events-none');
                 }, 300);
-                domainText.innerText = 'mockgle.com';
-                btnBack.classList.add('opacity-50', 'cursor-not-allowed');
-                btnBack.classList.remove('hover:bg-gray-300', 'cursor-pointer');
-                document.getElementById('search-results').classList.add('hidden');
             }
+            updateUI(); updateLines();
         }
         function goBack() { if(state.currentScreen === 'login') navigate('search'); }
 
         function updateUI() {
+            // Wi-Fi Menu Checkmarks
             document.getElementById('check-real').classList.toggle('hidden', state.connection !== 'real');
             document.getElementById('check-fake').classList.toggle('hidden', state.connection !== 'fake');
-            const wifiIcon = document.getElementById('taskbar-wifi-icon');
-            wifiIcon.innerHTML = (state.connection === 'fake') ? '⚠️' : '📶';
+            document.getElementById('taskbar-wifi-icon').innerHTML = (state.connection === 'fake') ? '⚠️' : '📶';
 
+            // DNS Spoofing Attacker UI
+            const btnDns = document.getElementById('btn-dns'), dnsStatus = document.getElementById('dns-status'), fakeRouter = document.getElementById('device-fakeWifi');
+            if (state.dnsSpoofing) {
+                dnsStatus.innerHTML = '<span class="text-red-400 font-bold">ON</span>';
+                fakeRouter.classList.add('spoofing-active');
+                document.getElementById('fake-router-status').innerText = 'DNS改ざん実行中';
+            } else {
+                dnsStatus.innerHTML = '<span class="text-gray-500">OFF</span>';
+                fakeRouter.classList.remove('spoofing-active');
+                document.getElementById('fake-router-status').innerText = 'Sniffer待機中';
+            }
+
+            // URL Bar & Phishing visual cues
             const pIcon = document.getElementById('protocol-icon'), pText = document.getElementById('protocol-text');
+            const isPhishing = (state.connection === 'fake' && state.dnsSpoofing && state.currentScreen === 'login');
+            
+            // Domain text determination
+            let domainText = 'mockgle.com';
+            if (state.currentScreen === 'login') {
+                // フィッシングサイトに誘導された場合、「l(エル)」が「1(イチ)」になっている
+                domainText = isPhishing ? 'examp<span class="text-red-500 font-bold text-lg">1</span>e.com/login' : 'example.com/login';
+            }
+
             if (state.protocol === 'http') {
                 pIcon.innerHTML = '🔓'; pIcon.className = "text-gray-400";
-                pText.innerHTML = `http://<span id="url-domain">${state.currentScreen === 'login' ? 'example.com/login' : 'mockgle.com'}</span>`;
+                pText.innerHTML = `http://${domainText}`;
                 pText.className = "text-gray-500 font-mono";
             } else {
                 pIcon.innerHTML = '🔒'; pIcon.className = "text-green-600";
-                pText.innerHTML = `<span class="text-green-600">https</span>://<span id="url-domain">${state.currentScreen === 'login' ? 'example.com/login' : 'mockgle.com'}</span>`;
+                pText.innerHTML = `<span class="text-green-600">https</span>://${domainText}`;
                 pText.className = "text-green-700 font-mono font-bold";
             }
+
+            // Show phishing banner for educational purposes if trapped
+            document.getElementById('phishing-banner').classList.toggle('hidden', !isPhishing);
         }
 
-        // --- シミュレーション & ログ & ギミック ---
+        // --- シミュレーション & ログ ---
         function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`; }
         function generateGarbage() { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'; let r=''; for(let i=0;i<40;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); return r; }
 
@@ -385,15 +440,11 @@
             const line = document.createElement('div'); line.className = 'mb-1 leading-tight break-all';
             line.innerHTML = `<span class="text-slate-500">[${getTimestamp()}]</span> `;
             logEl.appendChild(line);
-            
-            if(htmlContent.includes('<')) {
-                line.innerHTML += htmlContent;
-            } else {
+            if(htmlContent.includes('<')) { line.innerHTML += htmlContent; } 
+            else {
                 const contentSpan = document.createElement('span'); line.appendChild(contentSpan);
                 for (let i = 0; i < htmlContent.length; i++) {
-                    contentSpan.textContent += htmlContent.charAt(i);
-                    logEl.scrollTop = logEl.scrollHeight;
-                    await new Promise(r => setTimeout(r, delay));
+                    contentSpan.textContent += htmlContent.charAt(i); logEl.scrollTop = logEl.scrollHeight; await new Promise(r => setTimeout(r, delay));
                 }
             }
             logEl.scrollTop = logEl.scrollHeight;
@@ -402,10 +453,9 @@
         function clearLogs() { document.getElementById('serverLog').innerHTML = ''; document.getElementById('attackerLog').innerHTML = ''; }
 
         function triggerHackedEffect() {
-            const pcDiv = document.getElementById('victim-pc');
-            const overlay = document.getElementById('hacked-overlay');
+            const pcDiv = document.getElementById('victim-pc'), overlay = document.getElementById('hacked-overlay');
             pcDiv.classList.add('hacked-screen'); overlay.classList.remove('hidden'); overlay.classList.add('flash-red');
-            setTimeout(() => { pcDiv.classList.remove('hacked-screen'); overlay.classList.add('hidden'); overlay.classList.remove('flash-red'); }, 800);
+            setTimeout(() => { pcDiv.classList.remove('hacked-screen'); overlay.classList.add('hidden'); overlay.classList.remove('flash-red'); }, 1200);
         }
 
         async function executeSearch() {
@@ -413,22 +463,17 @@
             document.getElementById('search-results').classList.remove('hidden');
 
             if (state.connection === 'real') {
-                if (state.protocol === 'http') {
-                    typeWriterLog('serverLog', `<span class="text-yellow-400">【一部安全】PC-ルーター間(WPA2)は安全ですが、HTTP通信のためインターネット経路上で検索ワードが平文で流れています。</span><br>&nbsp;└ Query: ${query}`);
-                } else {
-                    typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】WPA2 + HTTPS(エンドツーエンド暗号化)により、経路全体で完全に保護されています。</span><br>&nbsp;└ Query: ${query}`);
-                }
+                if (state.protocol === 'http') { typeWriterLog('serverLog', `<span class="text-yellow-400">【一部安全】HTTPSではないため経路途中で検索ワードが見える状態です。</span><br>&nbsp;└ Query: ${query}`); } 
+                else { typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】WPA2+HTTPSにより完全に保護されています。</span><br>&nbsp;└ Query: ${query}`); }
             } else {
                 if (state.protocol === 'http') {
                     triggerHackedEffect();
                     await typeWriterLog('attackerLog', `<span class="text-orange-500 bg-orange-900/30 px-1 font-bold">⚠️ INTERCEPTED SEARCH QUERY!</span>`, 0);
                     await typeWriterLog('attackerLog', `<span class="text-orange-400">Target searched for : "${query}"</span>`, 20);
-                    typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure query detected. Data arrived in plaintext.</span>`);
                 } else {
                     const garbage = generateGarbage();
-                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS search request.</span>`, 5);
-                    await typeWriterLog('attackerLog', `<span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 2);
-                    typeWriterLog('serverLog', `<span class="text-green-300">Secure search request received & Decrypted.</span><br>&nbsp;└ Query: ${query}`);
+                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS search request.</span><br><span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 0);
+                    typeWriterLog('serverLog', `<span class="text-green-300">Secure search request received.</span><br>&nbsp;└ Query: ${query}`);
                 }
             }
         }
@@ -436,26 +481,44 @@
         async function executeLogin() {
             const id = document.getElementById('loginId').value;
             const pw = document.getElementById('loginPw').value;
+            const isPhishing = (state.connection === 'fake' && state.dnsSpoofing);
 
             if (state.connection === 'real') {
                 if (state.protocol === 'http') {
-                    typeWriterLog('serverLog', `<span class="text-yellow-400">【警告】Wi-Fi区間は安全ですが、HTTPのためインターネット上でパスワードが盗まれるリスクがあります。</span><br>&nbsp;└ ID: ${id} / PW: ${pw}`);
+                    typeWriterLog('serverLog', `<span class="text-yellow-400">【警告】HTTPのためインターネット上でパスワードが盗まれるリスクがあります。</span><br>&nbsp;└ ID: ${id} / PW: ${pw}`);
                 } else {
-                    typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】WPA2とHTTPSの二重暗号化により、極めて安全にデータを受信しました。</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                    typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】二重暗号化により極めて安全にデータを受信しました。</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
                 }
             } else {
-                if (state.protocol === 'http') {
+                // 偽Wi-Fi接続時
+                if (isPhishing) {
+                    // ★ フィッシング（DNSスプーフィング）成立時
+                    // 攻撃者のサーバーに直接データが送られるため、HTTPSであっても攻撃者は復号できる（攻撃者自身の証明書だから）。
                     triggerHackedEffect();
-                    await typeWriterLog('attackerLog', `<span class="text-red-500 bg-red-900/30 px-1 font-bold">🚨 INTERCEPTED CREDENTIALS!</span>`, 0);
+                    const protoText = state.protocol === 'https' ? 'HTTPS接続を信頼させ偽サイトへ誘導' : 'HTTPで偽サイトへ誘導';
+                    
+                    await typeWriterLog('attackerLog', `<span class="text-red-500 bg-red-900/30 px-1 font-bold">🚨 【PHISHING SUCCESS】偽サイト(examp1e.com)で認証情報を取得！</span>`, 0);
+                    await typeWriterLog('attackerLog', `<span class="text-orange-300 text-[10px]">手法: DNS Spoofing + ${protoText}</span>`, 0);
                     await typeWriterLog('attackerLog', `<span class="text-red-400">Target ID : ${id}</span>`, 20);
                     await typeWriterLog('attackerLog', `<span class="text-red-400">Target PW : ${pw}</span>`, 20);
                     await typeWriterLog('attackerLog', `<span class="text-yellow-500">>>> SAVED TO DATABASE.</span>`, 0);
-                    typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure login detected.</span>`);
+                    
+                    typeWriterLog('serverLog', `<span class="text-gray-500">... (本物サーバーには通信が全く届いていません)</span>`);
+
                 } else {
-                    const garbage = generateGarbage();
-                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS POST (Login).</span>`, 5);
-                    await typeWriterLog('attackerLog', `<span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 2);
-                    typeWriterLog('serverLog', `<span class="text-green-300">Secure payload received. Decrypted successfully.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                    // 通常の盗聴のみ（DNS改ざんなし）
+                    if (state.protocol === 'http') {
+                        triggerHackedEffect();
+                        await typeWriterLog('attackerLog', `<span class="text-red-500 bg-red-900/30 px-1 font-bold">🚨 INTERCEPTED HTTP CREDENTIALS!</span>`, 0);
+                        await typeWriterLog('attackerLog', `<span class="text-red-400">Target ID : ${id}</span>`, 20);
+                        await typeWriterLog('attackerLog', `<span class="text-red-400">Target PW : ${pw}</span>`, 20);
+                        typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure login detected.</span>`);
+                    } else {
+                        // HTTPSの防壁が機能するケース
+                        const garbage = generateGarbage();
+                        await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS POST (Login).</span><br><span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 0);
+                        typeWriterLog('serverLog', `<span class="text-green-300">Secure payload received. Decrypted successfully.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                    }
                 }
             }
         }
