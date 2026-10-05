@@ -8,7 +8,6 @@
     <style>
         body { margin: 0; overflow-x: hidden; touch-action: none; background-color: #1a1a2e; color: #fff; }
         
-        /* キャンバスとドラッグ */
         .canvas-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0f172a; }
         .draggable {
             position: absolute; cursor: grab; user-select: none; -webkit-user-select: none;
@@ -17,10 +16,8 @@
         .draggable.is-dragging { cursor: grabbing !important; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 50; }
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         
-        /* ログパネル */
         .console-box { overflow-y: auto; scroll-behavior: smooth; font-family: monospace; }
         
-        /* アニメーション・ギミック */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -43,20 +40,17 @@
         }
         .flash-red { animation: flashRed 0.5s ease-in-out; }
         
-        /* スクロールバー非表示（UI用） */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
 <body class="h-screen flex flex-col font-sans select-none">
 
-    <!-- ヘッダー -->
     <header class="bg-slate-900 border-b border-slate-700 p-3 flex justify-between items-center shadow-lg z-50">
         <h1 class="text-lg font-bold text-blue-400">🚨 Evil Twin Attack (偽Wi-Fi) シミュレーター</h1>
         <button onclick="resetState()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1 rounded text-sm transition border border-slate-500">配置リセット</button>
     </header>
 
-    <!-- メインコンテンツ (左右分割) -->
     <div class="flex flex-1 overflow-hidden">
         
         <!-- ==========================================
@@ -64,55 +58,82 @@
              ========================================== -->
         <div id="victim-pc" class="w-1/2 relative flex flex-col bg-cover bg-center border-r border-slate-700 shadow-2xl transition-all" style="background-image: url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop');">
             
-            <!-- 被害を知らせるオーバーレイ（非表示） -->
             <div id="hacked-overlay" class="absolute inset-0 bg-red-600/30 hidden z-40 pointer-events-none flex items-center justify-center">
                 <div class="bg-black/80 text-red-500 text-4xl font-mono font-bold p-6 border-4 border-red-500 rounded-lg">
-                    ⚠️️ CRITICAL DATA COMPROMISED
+                    ⚠ CRITICAL DATA COMPROMISED
                 </div>
             </div>
 
             <!-- ブラウザウィンドウ -->
-            <div class="absolute top-10 left-1/2 transform -translate-x-1/2 w-4/5 max-w-md bg-white text-black rounded-lg shadow-2xl overflow-hidden flex flex-col">
-                <!-- ブラウザのヘッダー -->
+            <div class="absolute top-8 bottom-16 left-1/2 transform -translate-x-1/2 w-11/12 max-w-lg bg-white text-black rounded-lg shadow-2xl overflow-hidden flex flex-col">
+                
+                <!-- アドレスバー -->
                 <div class="bg-gray-200 p-2 flex items-center gap-2 border-b">
-                    <div class="flex gap-1">
+                    <div class="flex gap-1 mr-2">
                         <div class="w-3 h-3 rounded-full bg-red-400"></div>
                         <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
                         <div class="w-3 h-3 rounded-full bg-green-400"></div>
                     </div>
-                    <!-- アドレスバー（HTTP / HTTPS トグル） -->
+                    <button onclick="goBack()" id="btn-back" class="text-gray-500 hover:bg-gray-300 p-1 rounded opacity-50 cursor-not-allowed">◀</button>
+                    
                     <div class="flex-1 bg-white border rounded px-2 py-1 text-xs flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition" onclick="toggleProtocol()">
                         <span id="protocol-icon" class="text-gray-400">🔓</span>
-                        <span id="protocol-text" class="text-gray-500 font-mono">http://example.com/login</span>
-                        <span class="ml-auto text-blue-500 text-[10px]">クリックで切替</span>
+                        <span id="protocol-text" class="text-gray-500 font-mono">http://<span id="url-domain">mockgle.com</span></span>
+                        <span class="ml-auto text-blue-500 text-[10px]">クリックで暗号化切替</span>
                     </div>
                 </div>
-                <!-- Webサイトのコンテンツ -->
-                <div class="p-6 bg-slate-50 flex-1 text-center">
-                    <h2 class="text-xl font-bold text-slate-700 mb-1">MEMBER LOGIN</h2>
-                    <p class="text-xs text-slate-500 mb-6">無料Wi-Fiサービスへようこそ</p>
+
+                <!-- コンテンツ領域 -->
+                <div class="relative flex-1 bg-white overflow-y-auto">
                     
-                    <input type="text" id="loginId" placeholder="ユーザーID (例: admin)" class="w-full border p-2 mb-3 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="taro_yamada">
-                    
-                    <!-- パスワード入力欄（可視化トグル付き） -->
-                    <div class="relative mb-4">
-                        <input type="password" id="loginPw" placeholder="パスワード" class="w-full border p-2 pr-10 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="secret_pass_123">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none">
-                            <!-- 目を開いたアイコン（デフォルト表示） -->
-                            <svg id="eye-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            <!-- 目を閉じたアイコン（非表示状態） -->
-                            <svg id="eye-slash-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                            </svg>
+                    <!-- 【画面1】検索エンジン (Mockgle) -->
+                    <div id="screen-search" class="absolute inset-0 p-6 flex flex-col items-center pt-20 transition-opacity duration-300">
+                        <h2 class="text-5xl font-bold mb-8 tracking-tighter">
+                            <span class="text-blue-500">M</span><span class="text-red-500">o</span><span class="text-yellow-500">c</span><span class="text-blue-500">k</span><span class="text-green-500">g</span><span class="text-red-500">l</span><span class="text-yellow-500">e</span>
+                        </h2>
+                        <div class="w-full relative max-w-sm mb-6">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400">🔍</span>
+                            </div>
+                            <input type="text" id="searchQuery" placeholder="検索キーワードを入力" class="w-full border border-gray-300 pl-10 p-3 rounded-full text-sm focus:ring-2 focus:ring-blue-200 outline-none shadow-sm" value="社内システム ログイン">
+                        </div>
+                        <button onclick="executeSearch()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded text-sm transition">
+                            Mockgle 検索
                         </button>
+                        
+                        <!-- 検索結果 (最初は非表示) -->
+                        <div id="search-results" class="hidden w-full max-w-sm mt-8 text-left border-t pt-4">
+                            <p class="text-[10px] text-gray-400 mb-2">約 1 件の検索結果</p>
+                            <div class="cursor-pointer hover:bg-gray-50 p-3 rounded-lg border border-transparent hover:border-gray-200 transition" onclick="navigate('login')">
+                                <div class="text-[11px] text-gray-500 mb-1">example.com > login</div>
+                                <div class="text-base text-blue-600 hover:underline font-bold mb-1">社内ポータル / メンバーログイン</div>
+                                <div class="text-xs text-gray-600 line-clamp-2">ここから社内の機密情報システムおよび無料Wi-Fiサービスへアクセスできます。IDとパスワードを入力してください。</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <button onclick="executeSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition active:scale-95 shadow-md">
-                        ログイン
-                    </button>
+                    <!-- 【画面2】ログイン画面 -->
+                    <div id="screen-login" class="absolute inset-0 p-6 bg-slate-50 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 hidden">
+                        <div class="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm text-center">
+                            <h2 class="text-xl font-bold text-slate-700 mb-1">MEMBER LOGIN</h2>
+                            <p class="text-xs text-slate-500 mb-6">システムへログインしてください</p>
+                            
+                            <input type="text" id="loginId" placeholder="ユーザーID (例: admin)" class="w-full border p-2 mb-3 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="taro_yamada">
+                            
+                            <div class="relative mb-6">
+                                <input type="password" id="loginPw" placeholder="パスワード" class="w-full border p-2 pr-10 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="secret_pass_123">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                    <svg id="eye-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    <svg id="eye-slash-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                </button>
+                            </div>
+
+                            <button onclick="executeLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition active:scale-95 shadow-md">
+                                ログイン
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -120,16 +141,12 @@
             <div class="absolute bottom-0 w-full h-10 bg-slate-900/90 backdrop-blur border-t border-slate-700 flex justify-end items-center px-4 z-50">
                 <div class="text-xs text-white flex gap-4 items-center relative">
                     <span>12:00 PM</span>
-                    <!-- Wi-Fiアイコンボタン -->
                     <button id="wifi-btn" onclick="toggleWifiMenu()" class="hover:bg-slate-700 p-1 rounded transition text-lg relative">
                         <span id="taskbar-wifi-icon">📶</span>
                     </button>
                     
-                    <!-- Wi-Fi 選択ポップアップ -->
                     <div id="wifi-menu" class="hidden absolute bottom-10 right-0 w-64 bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-2 flex flex-col gap-1">
                         <div class="text-xs font-bold text-slate-400 p-1 border-b border-slate-600 mb-1">利用可能なネットワーク</div>
-                        
-                        <!-- 本物Wi-Fi -->
                         <button onclick="selectWifi('real')" class="flex items-center justify-between p-2 rounded hover:bg-slate-700 text-left transition group">
                             <div>
                                 <div class="text-sm font-bold text-white group-hover:text-green-400">at_STARBUCKS_Wi2</div>
@@ -137,8 +154,6 @@
                             </div>
                             <span id="check-real" class="text-green-400 font-bold hidden">✓</span>
                         </button>
-                        
-                        <!-- 偽Wi-Fi (Evil Twin) -->
                         <button onclick="selectWifi('fake')" class="flex items-center justify-between p-2 rounded hover:bg-slate-700 text-left transition group">
                             <div>
                                 <div class="text-sm font-bold text-white group-hover:text-red-400">at_STARBUCKS_Wi2</div>
@@ -147,7 +162,7 @@
                             <span id="check-fake" class="text-red-400 font-bold hidden">✓</span>
                         </button>
                         <div class="text-[9px] text-slate-500 mt-2 p-1 bg-slate-900 rounded">
-                            ※攻撃者はよく似た名前、あるいは全く同じSSIDで罠を仕掛けます（Evil Twin攻撃）。
+                            ※攻撃者はよく似た名前、あるいは全く同じSSIDで罠を仕掛けます。
                         </div>
                     </div>
                 </div>
@@ -159,33 +174,20 @@
              ========================================== -->
         <div class="w-1/2 flex flex-col bg-slate-900 border-l border-slate-700 relative">
             
-            <!-- 上半分：ネットワークキャンバス -->
             <div class="h-1/2 relative canvas-container border-b border-slate-700 shadow-inner" id="canvas">
                 <div class="absolute top-2 left-2 text-xs font-bold text-slate-500 pointer-events-none z-0">🌐 ネットワークトポロジー (ドラッグで移動可)</div>
-                
                 <svg id="linesSvg">
                     <line id="line-pc" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" />
                     <line id="line-real" stroke="#10b981" stroke-width="2" />
                     <line id="line-fake" stroke="#ef4444" stroke-width="2" />
                 </svg>
-
-                <div id="device-pc" class="draggable bg-blue-900/80 border border-blue-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">
-                    💻 ユーザーPC
-                </div>
-                <div id="device-realWifi" class="draggable bg-green-900/80 border border-green-400 rounded p-2 w-28 text-center text-white text-xs backdrop-blur">
-                    📶 本物ルーター
-                </div>
-                <div id="device-fakeWifi" class="draggable bg-red-900/80 border border-red-500 rounded p-2 w-28 text-center text-white text-xs backdrop-blur shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-                    🦹‍♂️ 偽装ルーター<br><span class="text-[8px] text-red-200">Packet Sniffer起動中</span>
-                </div>
-                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">
-                    🗄️ Webサーバー
-                </div>
+                <div id="device-pc" class="draggable bg-blue-900/80 border border-blue-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">💻 ユーザーPC</div>
+                <div id="device-realWifi" class="draggable bg-green-900/80 border border-green-400 rounded p-2 w-28 text-center text-white text-xs backdrop-blur">📶 本物ルーター</div>
+                <div id="device-fakeWifi" class="draggable bg-red-900/80 border border-red-500 rounded p-2 w-28 text-center text-white text-xs backdrop-blur shadow-[0_0_15px_rgba(239,68,68,0.3)]">🦹‍♂️ 偽装ルーター<br><span class="text-[8px] text-red-200">Packet Sniffer起動中</span></div>
+                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">🗄️ Webサーバー</div>
             </div>
 
-            <!-- 下半分：ログコンソール -->
             <div class="h-1/2 flex bg-black font-mono text-xs overflow-hidden">
-                <!-- ハッカー端末 -->
                 <div class="w-1/2 border-r border-slate-800 flex flex-col">
                     <div class="bg-slate-900 p-1 px-2 border-b border-red-900 text-red-500 font-bold flex justify-between items-center">
                         <span>>_ attacker_terminal.sh</span>
@@ -195,7 +197,6 @@
                         <span class="text-slate-600">Starting packet sniffer on wlan0mon...<br>Waiting for victims to connect...<br></span>
                     </div>
                 </div>
-                <!-- Webサーバーログ -->
                 <div class="w-1/2 flex flex-col">
                     <div class="bg-slate-900 p-1 px-2 border-b border-purple-900 text-purple-400 font-bold flex justify-between items-center">
                         <span>🗄️ Server_Access.log</span>
@@ -212,31 +213,24 @@
 
     <script>
         // --- 状態管理 ---
-        const STORAGE_KEY = 'wifiSimStateV2';
+        const STORAGE_KEY = 'wifiSimStateV3';
         let state = {
             positions: {
-                pc: { x: 40, y: 50 },
-                realWifi: { x: 220, y: 20 },
-                fakeWifi: { x: 220, y: 150 },
-                server: { x: 420, y: 80 }
+                pc: { x: 40, y: 50 }, realWifi: { x: 220, y: 20 },
+                fakeWifi: { x: 220, y: 150 }, server: { x: 420, y: 80 }
             },
-            connection: 'real', // 'real' or 'fake'
-            protocol: 'http'    // 'http' or 'https'
+            connection: 'real',
+            protocol: 'http',
+            currentScreen: 'search'
         };
 
-        const canvas = document.getElementById('canvas');
         const elements = {
-            pc: document.getElementById('device-pc'),
-            realWifi: document.getElementById('device-realWifi'),
-            fakeWifi: document.getElementById('device-fakeWifi'),
-            server: document.getElementById('device-server')
+            pc: document.getElementById('device-pc'), realWifi: document.getElementById('device-realWifi'),
+            fakeWifi: document.getElementById('device-fakeWifi'), server: document.getElementById('device-server')
         };
         const lines = {
-            pc: document.getElementById('line-pc'),
-            real: document.getElementById('line-real'),
-            fake: document.getElementById('line-fake')
+            pc: document.getElementById('line-pc'), real: document.getElementById('line-real'), fake: document.getElementById('line-fake')
         };
-
         let elementDims = {};
 
         function cacheDimensions() {
@@ -246,7 +240,6 @@
         }
 
         function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
         function loadState() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
@@ -257,191 +250,147 @@
                     if (parsed.protocol) state.protocol = parsed.protocol;
                 } catch(e) {}
             }
-            
             Object.keys(elements).forEach(key => {
                 elements[key].style.left = state.positions[key].x + 'px';
                 elements[key].style.top = state.positions[key].y + 'px';
             });
-
-            updateUI();
-            updateLines();
+            updateUI(); updateLines();
         }
+        function resetState() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
 
-        function resetState() {
-            localStorage.removeItem(STORAGE_KEY);
-            location.reload();
-        }
-
-        // --- パスワード可視化トグル ---
-        function togglePasswordVisibility() {
-            const pwInput = document.getElementById('loginPw');
-            const eyeIcon = document.getElementById('eye-icon');
-            const eyeSlashIcon = document.getElementById('eye-slash-icon');
-            
-            if (pwInput.type === 'password') {
-                pwInput.type = 'text';
-                eyeIcon.classList.add('hidden');
-                eyeSlashIcon.classList.remove('hidden');
-            } else {
-                pwInput.type = 'password';
-                eyeIcon.classList.remove('hidden');
-                eyeSlashIcon.classList.add('hidden');
-            }
-        }
-
-        // --- ドラッグ処理 (rAF) ---
-        let draggedKey = null;
-        let startPointerX = 0, startPointerY = 0;
-        let startElemX = 0, startElemY = 0;
-        let animFrameId = null;
-
+        // --- ドラッグ処理 ---
+        let draggedKey = null, startPointerX = 0, startPointerY = 0, startElemX = 0, startElemY = 0, animFrameId = null;
         Object.keys(elements).forEach(key => {
             const el = elements[key];
             el.addEventListener('pointerdown', (e) => {
                 if (e.button !== 0) return;
-                draggedKey = key;
-                el.classList.add('is-dragging');
-                el.setPointerCapture(e.pointerId);
-                const rect = canvas.getBoundingClientRect();
+                draggedKey = key; el.classList.add('is-dragging'); el.setPointerCapture(e.pointerId);
                 startPointerX = e.clientX; startPointerY = e.clientY;
                 startElemX = state.positions[key].x; startElemY = state.positions[key].y;
                 e.preventDefault();
             });
-
             el.addEventListener('pointermove', (e) => {
                 if (draggedKey !== key) return;
-                const canvasRect = canvas.getBoundingClientRect();
-                let nextX = startElemX + (e.clientX - startPointerX);
-                let nextY = startElemY + (e.clientY - startPointerY);
-                nextX = Math.max(0, Math.min(nextX, canvasRect.width - elementDims[key].w));
-                nextY = Math.max(0, Math.min(nextY, canvasRect.height - elementDims[key].h));
-                
-                state.positions[key].x = nextX; state.positions[key].y = nextY;
-
+                const rect = document.getElementById('canvas').getBoundingClientRect();
+                let nx = startElemX + (e.clientX - startPointerX), ny = startElemY + (e.clientY - startPointerY);
+                nx = Math.max(0, Math.min(nx, rect.width - elementDims[key].w));
+                ny = Math.max(0, Math.min(ny, rect.height - elementDims[key].h));
+                state.positions[key].x = nx; state.positions[key].y = ny;
                 if (!animFrameId) {
                     animFrameId = requestAnimationFrame(() => {
-                        el.style.left = nextX + 'px'; el.style.top = nextY + 'px';
+                        el.style.left = nx + 'px'; el.style.top = ny + 'px';
                         updateLines(); animFrameId = null;
                     });
                 }
             });
-
-            const onPointerUp = (e) => {
+            const onUp = (e) => {
                 if (draggedKey === key) {
-                    el.classList.remove('is-dragging');
-                    el.releasePointerCapture(e.pointerId);
-                    draggedKey = null;
+                    el.classList.remove('is-dragging'); el.releasePointerCapture(e.pointerId); draggedKey = null;
                     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
                     saveState();
                 }
             };
-            el.addEventListener('pointerup', onPointerUp);
-            el.addEventListener('pointercancel', onPointerUp);
+            el.addEventListener('pointerup', onUp); el.addEventListener('pointercancel', onUp);
         });
 
         function updateLines() {
             const getCenter = (key) => ({
-                x: state.positions[key].x + (elementDims[key]?.w || 100) / 2,
-                y: state.positions[key].y + (elementDims[key]?.h || 40) / 2
+                x: state.positions[key].x + (elementDims[key]?.w || 100) / 2, y: state.positions[key].y + (elementDims[key]?.h || 40) / 2
             });
-
-            const pC = getCenter('pc');
-            const rC = getCenter('realWifi');
-            const fC = getCenter('fakeWifi');
-            const sC = getCenter('server');
-
-            lines.real.setAttribute('x1', rC.x); lines.real.setAttribute('y1', rC.y);
-            lines.real.setAttribute('x2', sC.x); lines.real.setAttribute('y2', sC.y);
-            lines.fake.setAttribute('x1', fC.x); lines.fake.setAttribute('y1', fC.y);
-            lines.fake.setAttribute('x2', sC.x); lines.fake.setAttribute('y2', sC.y);
-
+            const pC = getCenter('pc'), rC = getCenter('realWifi'), fC = getCenter('fakeWifi'), sC = getCenter('server');
+            lines.real.setAttribute('x1', rC.x); lines.real.setAttribute('y1', rC.y); lines.real.setAttribute('x2', sC.x); lines.real.setAttribute('y2', sC.y);
+            lines.fake.setAttribute('x1', fC.x); lines.fake.setAttribute('y1', fC.y); lines.fake.setAttribute('x2', sC.x); lines.fake.setAttribute('y2', sC.y);
             lines.pc.setAttribute('x1', pC.x); lines.pc.setAttribute('y1', pC.y);
             if (state.connection === 'real') {
-                lines.pc.setAttribute('x2', rC.x); lines.pc.setAttribute('y2', rC.y);
-                lines.pc.setAttribute('stroke', '#10b981'); // Green
+                lines.pc.setAttribute('x2', rC.x); lines.pc.setAttribute('y2', rC.y); lines.pc.setAttribute('stroke', '#10b981');
             } else {
-                lines.pc.setAttribute('x2', fC.x); lines.pc.setAttribute('y2', fC.y);
-                lines.pc.setAttribute('stroke', '#ef4444'); // Red
+                lines.pc.setAttribute('x2', fC.x); lines.pc.setAttribute('y2', fC.y); lines.pc.setAttribute('stroke', '#ef4444');
             }
         }
 
-        // --- UI 操作 ---
-        function toggleWifiMenu() {
-            const menu = document.getElementById('wifi-menu');
-            menu.classList.toggle('hidden');
+        // --- ブラウザ・UI 操作 ---
+        function toggleWifiMenu() { document.getElementById('wifi-menu').classList.toggle('hidden'); }
+        function selectWifi(type) { state.connection = type; document.getElementById('wifi-menu').classList.add('hidden'); updateUI(); updateLines(); saveState(); }
+        function toggleProtocol() { state.protocol = (state.protocol === 'http') ? 'https' : 'http'; updateUI(); saveState(); }
+        
+        function togglePasswordVisibility() {
+            const pwInput = document.getElementById('loginPw');
+            const eyeIcon = document.getElementById('eye-icon'), eyeSlashIcon = document.getElementById('eye-slash-icon');
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text'; eyeIcon.classList.add('hidden'); eyeSlashIcon.classList.remove('hidden');
+            } else {
+                pwInput.type = 'password'; eyeIcon.classList.remove('hidden'); eyeSlashIcon.classList.add('hidden');
+            }
         }
 
-        function selectWifi(type) {
-            state.connection = type;
-            document.getElementById('wifi-menu').classList.add('hidden');
-            updateUI();
-            updateLines();
-            saveState();
-        }
+        function navigate(targetScreen) {
+            const searchScreen = document.getElementById('screen-search');
+            const loginScreen = document.getElementById('screen-login');
+            const btnBack = document.getElementById('btn-back');
+            const domainText = document.getElementById('url-domain');
 
-        function toggleProtocol() {
-            state.protocol = (state.protocol === 'http') ? 'https' : 'http';
-            updateUI();
-            saveState();
+            if(targetScreen === 'login') {
+                state.currentScreen = 'login';
+                searchScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    searchScreen.classList.add('hidden');
+                    loginScreen.classList.remove('hidden');
+                    // Reflow hack
+                    void loginScreen.offsetWidth;
+                    loginScreen.classList.remove('opacity-0', 'pointer-events-none');
+                }, 300);
+                domainText.innerText = 'example.com/login';
+                btnBack.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnBack.classList.add('hover:bg-gray-300', 'cursor-pointer');
+            } else if (targetScreen === 'search') {
+                state.currentScreen = 'search';
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    searchScreen.classList.remove('hidden');
+                    void searchScreen.offsetWidth;
+                    searchScreen.classList.remove('opacity-0', 'pointer-events-none');
+                }, 300);
+                domainText.innerText = 'mockgle.com';
+                btnBack.classList.add('opacity-50', 'cursor-not-allowed');
+                btnBack.classList.remove('hover:bg-gray-300', 'cursor-pointer');
+                document.getElementById('search-results').classList.add('hidden');
+            }
         }
+        function goBack() { if(state.currentScreen === 'login') navigate('search'); }
 
         function updateUI() {
-            // Wi-Fi メニューチェックマーク
             document.getElementById('check-real').classList.toggle('hidden', state.connection !== 'real');
             document.getElementById('check-fake').classList.toggle('hidden', state.connection !== 'fake');
-            
-            // タスクバーアイコンの色
             const wifiIcon = document.getElementById('taskbar-wifi-icon');
-            if(state.connection === 'fake') {
-                wifiIcon.innerHTML = '⚠️';
-                wifiIcon.title = "危険なネットワーク";
-            } else {
-                wifiIcon.innerHTML = '📶';
-                wifiIcon.title = "安全なネットワーク";
-            }
+            wifiIcon.innerHTML = (state.connection === 'fake') ? '⚠️' : '📶';
 
-            // ブラウザのアドレスバー
-            const pIcon = document.getElementById('protocol-icon');
-            const pText = document.getElementById('protocol-text');
+            const pIcon = document.getElementById('protocol-icon'), pText = document.getElementById('protocol-text');
             if (state.protocol === 'http') {
-                pIcon.innerHTML = '🔓';
-                pIcon.className = "text-gray-400";
-                pText.innerHTML = 'http://example.com/login';
+                pIcon.innerHTML = '🔓'; pIcon.className = "text-gray-400";
+                pText.innerHTML = `http://<span id="url-domain">${state.currentScreen === 'login' ? 'example.com/login' : 'mockgle.com'}</span>`;
                 pText.className = "text-gray-500 font-mono";
             } else {
-                pIcon.innerHTML = '🔒';
-                pIcon.className = "text-green-600";
-                pText.innerHTML = '<span class="text-green-600">https</span>://example.com/login';
+                pIcon.innerHTML = '🔒'; pIcon.className = "text-green-600";
+                pText.innerHTML = `<span class="text-green-600">https</span>://<span id="url-domain">${state.currentScreen === 'login' ? 'example.com/login' : 'mockgle.com'}</span>`;
                 pText.className = "text-green-700 font-mono font-bold";
             }
         }
 
         // --- シミュレーション & ログ & ギミック ---
-        function getTimestamp() {
-            const d = new Date();
-            return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`;
-        }
+        function getTimestamp() { const d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}.${d.getMilliseconds().toString().padStart(3,'0')}`; }
+        function generateGarbage() { const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'; let r=''; for(let i=0;i<40;i++) r+=c.charAt(Math.floor(Math.random()*c.length)); return r; }
 
-        function generateGarbage() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-            let res = ''; for(let i=0; i<40; i++) res += chars.charAt(Math.floor(Math.random()*chars.length));
-            return res;
-        }
-
-        // ログを1文字ずつタイプライター風に出力する演出
         async function typeWriterLog(elementId, htmlContent, delay = 10) {
             const logEl = document.getElementById(elementId);
-            const line = document.createElement('div');
-            line.className = 'mb-1 leading-tight break-all';
+            const line = document.createElement('div'); line.className = 'mb-1 leading-tight break-all';
             line.innerHTML = `<span class="text-slate-500">[${getTimestamp()}]</span> `;
             logEl.appendChild(line);
             
-            // 一旦プレーンテキストとして追加（HTMLタグを含む場合は簡易的に一気に表示）
             if(htmlContent.includes('<')) {
                 line.innerHTML += htmlContent;
             } else {
-                const contentSpan = document.createElement('span');
-                line.appendChild(contentSpan);
+                const contentSpan = document.createElement('span'); line.appendChild(contentSpan);
                 for (let i = 0; i < htmlContent.length; i++) {
                     contentSpan.textContent += htmlContent.charAt(i);
                     logEl.scrollTop = logEl.scrollHeight;
@@ -451,61 +400,61 @@
             logEl.scrollTop = logEl.scrollHeight;
         }
 
-        function clearLogs() {
-            document.getElementById('serverLog').innerHTML = '';
-            document.getElementById('attackerLog').innerHTML = '';
-        }
+        function clearLogs() { document.getElementById('serverLog').innerHTML = ''; document.getElementById('attackerLog').innerHTML = ''; }
 
-        async function executeSimulation() {
-            const id = document.getElementById('loginId').value;
-            const pw = document.getElementById('loginPw').value;
+        function triggerHackedEffect() {
             const pcDiv = document.getElementById('victim-pc');
             const overlay = document.getElementById('hacked-overlay');
+            pcDiv.classList.add('hacked-screen'); overlay.classList.remove('hidden'); overlay.classList.add('flash-red');
+            setTimeout(() => { pcDiv.classList.remove('hacked-screen'); overlay.classList.add('hidden'); overlay.classList.remove('flash-red'); }, 800);
+        }
+
+        async function executeSearch() {
+            const query = document.getElementById('searchQuery').value || '空の検索';
+            document.getElementById('search-results').classList.remove('hidden');
 
             if (state.connection === 'real') {
-                typeWriterLog('serverLog', `<span class="text-white">Request received via SECURE WPA2 tunnel.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                typeWriterLog('serverLog', `<span class="text-white">Search query via SECURE tunnel.</span><br>&nbsp;└ Query: ${query}`);
             } else {
-                // 偽Wi-Fi接続時
                 if (state.protocol === 'http') {
-                    // ★ ギミック発動：画面揺れ＋赤フラッシュ
-                    pcDiv.classList.add('hacked-screen');
-                    overlay.classList.remove('hidden');
-                    overlay.classList.add('flash-red');
-                    
-                    setTimeout(() => {
-                        pcDiv.classList.remove('hacked-screen');
-                        overlay.classList.add('hidden');
-                        overlay.classList.remove('flash-red');
-                    }, 1000);
-
-                    // 攻撃者コンソールへ劇的な出力
-                    await typeWriterLog('attackerLog', `<span class="text-red-500 bg-red-900/30 px-1 font-bold">⚠️ INTERCEPTED HTTP POST DATA!</span>`, 0);
-                    await typeWriterLog('attackerLog', `<span class="text-red-400">Target ID : ${id}</span>`, 20);
-                    await typeWriterLog('attackerLog', `<span class="text-red-400">Target PW : ${pw}</span>`, 20);
-                    await typeWriterLog('attackerLog', `<span class="text-yellow-500">>>> CREDENTIALS SAVED TO DATABASE.</span>`, 0);
-                    
-                    typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure login detected. Data arrived in plaintext.</span>`);
-                } else if (state.protocol === 'https') {
-                    // 攻撃者は傍受するが暗号化されている
+                    triggerHackedEffect();
+                    await typeWriterLog('attackerLog', `<span class="text-orange-500 bg-orange-900/30 px-1 font-bold">⚠️ INTERCEPTED SEARCH QUERY!</span>`, 0);
+                    await typeWriterLog('attackerLog', `<span class="text-orange-400">Target searched for : "${query}"</span>`, 20);
+                    typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure query detected. Data arrived in plaintext.</span>`);
+                } else {
                     const garbage = generateGarbage();
-                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS packet (Port 443).</span>`, 5);
+                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS search request.</span>`, 5);
                     await typeWriterLog('attackerLog', `<span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 2);
-                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Decryption failed. SSL/TLS Handshake verified. Dropping payload.</span>`, 10);
-                    
-                    typeWriterLog('serverLog', `<span class="text-green-300">Secure payload received. Decrypted successfully.</span><br>&nbsp;└ ID: ${id}`);
+                    typeWriterLog('serverLog', `<span class="text-green-300">Secure search request received & Decrypted.</span><br>&nbsp;└ Query: ${query}`);
                 }
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            cacheDimensions();
-            loadState();
-        });
+        async function executeLogin() {
+            const id = document.getElementById('loginId').value;
+            const pw = document.getElementById('loginPw').value;
 
-        window.addEventListener('resize', () => {
-            cacheDimensions();
-            updateLines();
-        });
+            if (state.connection === 'real') {
+                typeWriterLog('serverLog', `<span class="text-white">Login request via SECURE tunnel.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+            } else {
+                if (state.protocol === 'http') {
+                    triggerHackedEffect();
+                    await typeWriterLog('attackerLog', `<span class="text-red-500 bg-red-900/30 px-1 font-bold">🚨 INTERCEPTED CREDENTIALS!</span>`, 0);
+                    await typeWriterLog('attackerLog', `<span class="text-red-400">Target ID : ${id}</span>`, 20);
+                    await typeWriterLog('attackerLog', `<span class="text-red-400">Target PW : ${pw}</span>`, 20);
+                    await typeWriterLog('attackerLog', `<span class="text-yellow-500">>>> SAVED TO DATABASE.</span>`, 0);
+                    typeWriterLog('serverLog', `<span class="text-yellow-500">Warning: Insecure login detected.</span>`);
+                } else {
+                    const garbage = generateGarbage();
+                    await typeWriterLog('attackerLog', `<span class="text-slate-400">Intercepted HTTPS POST (Login).</span>`, 5);
+                    await typeWriterLog('attackerLog', `<span class="text-slate-500 text-[10px]">Data: ${garbage}...</span>`, 2);
+                    typeWriterLog('serverLog', `<span class="text-green-300">Secure payload received. Decrypted successfully.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { cacheDimensions(); loadState(); });
+        window.addEventListener('resize', () => { cacheDimensions(); updateLines(); });
     </script>
 </body>
 </html>
