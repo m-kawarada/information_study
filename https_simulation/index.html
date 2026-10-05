@@ -184,7 +184,7 @@
                 <div id="device-pc" class="draggable bg-blue-900/80 border border-blue-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">💻 ユーザーPC</div>
                 <div id="device-realWifi" class="draggable bg-green-900/80 border border-green-400 rounded p-2 w-28 text-center text-white text-xs backdrop-blur">📶 本物ルーター</div>
                 <div id="device-fakeWifi" class="draggable bg-red-900/80 border border-red-500 rounded p-2 w-28 text-center text-white text-xs backdrop-blur shadow-[0_0_15px_rgba(239,68,68,0.3)]">🦹‍♂️ 偽装ルーター<br><span class="text-[8px] text-red-200">Packet Sniffer起動中</span></div>
-                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">🗄️ Webサーバー</div>
+                <div id="device-server" class="draggable bg-purple-900/80 border border-purple-400 rounded p-2 w-24 text-center text-white text-xs backdrop-blur">🗄️️ Webサーバー</div>
             </div>
 
             <div class="h-1/2 flex bg-black font-mono text-xs overflow-hidden">
@@ -213,7 +213,7 @@
 
     <script>
         // --- 状態管理 ---
-        const STORAGE_KEY = 'wifiSimStateV3';
+        const STORAGE_KEY = 'wifiSimStateV4';
         let state = {
             positions: {
                 pc: { x: 40, y: 50 }, realWifi: { x: 220, y: 20 },
@@ -335,7 +335,6 @@
                 setTimeout(() => {
                     searchScreen.classList.add('hidden');
                     loginScreen.classList.remove('hidden');
-                    // Reflow hack
                     void loginScreen.offsetWidth;
                     loginScreen.classList.remove('opacity-0', 'pointer-events-none');
                 }, 300);
@@ -414,7 +413,11 @@
             document.getElementById('search-results').classList.remove('hidden');
 
             if (state.connection === 'real') {
-                typeWriterLog('serverLog', `<span class="text-white">Search query via SECURE tunnel.</span><br>&nbsp;└ Query: ${query}`);
+                if (state.protocol === 'http') {
+                    typeWriterLog('serverLog', `<span class="text-yellow-400">【一部安全】PC-ルーター間(WPA2)は安全ですが、HTTP通信のためインターネット経路上で検索ワードが平文で流れています。</span><br>&nbsp;└ Query: ${query}`);
+                } else {
+                    typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】WPA2 + HTTPS(エンドツーエンド暗号化)により、経路全体で完全に保護されています。</span><br>&nbsp;└ Query: ${query}`);
+                }
             } else {
                 if (state.protocol === 'http') {
                     triggerHackedEffect();
@@ -435,7 +438,11 @@
             const pw = document.getElementById('loginPw').value;
 
             if (state.connection === 'real') {
-                typeWriterLog('serverLog', `<span class="text-white">Login request via SECURE tunnel.</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                if (state.protocol === 'http') {
+                    typeWriterLog('serverLog', `<span class="text-yellow-400">【警告】Wi-Fi区間は安全ですが、HTTPのためインターネット上でパスワードが盗まれるリスクがあります。</span><br>&nbsp;└ ID: ${id} / PW: ${pw}`);
+                } else {
+                    typeWriterLog('serverLog', `<span class="text-green-400">【完全保護】WPA2とHTTPSの二重暗号化により、極めて安全にデータを受信しました。</span><br>&nbsp;└ ID: ${id} / PW: ${pw} (Auth OK)`);
+                }
             } else {
                 if (state.protocol === 'http') {
                     triggerHackedEffect();
