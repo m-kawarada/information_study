@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偽Wi-Fi＆パケット盗聴シミュレーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* カスタムスタイル（Tailwindで補いきれない部分） */
+        body { margin: 0; overflow-x: hidden; }
+        .canvas-container { position: relative; width: 100%; height: 100%; background: #f0f4f8; overflow: hidden; }
+        .draggable {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.1s, box-shadow 0.1s;
+            z-index: 10;
+        }
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 50;
+        }
+        svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .console-box { height: 200px; overflow-y: auto; scroll-behavior: smooth; }
+        .console-line { margin-bottom: 0.25rem; word-break: break-all; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col font-sans">
+
+    <!-- ヘッダー -->
+    <header class="bg-gray-800 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">📡 偽Wi-Fi＆パケット盗聴シミュレーター (Evil Twin Attack)</h1>
+        <button onclick="resetState()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm transition">状態をリセット</button>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- 左側：機器パレット（説明用） -->
+        <div class="w-1/5 bg-white border-r p-4 shadow-inner z-20">
+            <h2 class="font-bold text-lg mb-4 border-b pb-2">機器パレット</h2>
+            <p class="text-xs text-gray-500 mb-4">右のキャンバスにある機器をドラッグして自由に配置できます。</p>
+            <ul class="space-y-3 text-sm">
+                <li class="flex items-center space-x-2"><span class="w-4 h-4 bg-blue-500 rounded-full inline-block"></span><span>ユーザーPC</span></li>
+                <li class="flex items-center space-x-2"><span class="w-4 h-4 bg-green-500 rounded-full inline-block"></span><span>本物Wi-Fi</span></li>
+                <li class="flex items-center space-x-2"><span class="w-4 h-4 bg-red-500 rounded-full inline-block"></span><span>偽Wi-Fi (攻撃者)</span></li>
+                <li class="flex items-center space-x-2"><span class="w-4 h-4 bg-purple-500 rounded-full inline-block"></span><span>Webサーバー</span></li>
+            </ul>
+        </div>
+
+        <!-- 中央：キャンバス -->
+        <div class="w-3/5 relative canvas-container" id="canvas">
+            <svg id="linesSvg">
+                <!-- 線画用SVG -->
+                <line id="line-pc" stroke="#3b82f6" stroke-width="3" stroke-dasharray="5,5" />
+                <line id="line-real" stroke="#10b981" stroke-width="4" />
+                <line id="line-fake" stroke="#ef4444" stroke-width="4" />
+            </svg>
+
+            <!-- デバイス要素 -->
+            <div id="device-pc" class="draggable bg-blue-100 border-2 border-blue-500 rounded-lg p-3 w-32 text-center" style="left: 50px; top: 150px;">
+                <div class="text-2xl mb-1">💻</div>
+                <div class="text-xs font-bold text-blue-800">ユーザーPC</div>
+            </div>
+
+            <div id="device-realWifi" class="draggable bg-green-100 border-2 border-green-500 rounded-lg p-3 w-40 text-center" style="left: 250px; top: 50px;">
+                <div class="text-2xl mb-1">📶</div>
+                <div class="text-xs font-bold text-green-800">本物Wi-Fi<br><span class="text-[10px] font-mono">at_STARBUCKS_Wi2</span></div>
+            </div>
+
+            <div id="device-fakeWifi" class="draggable bg-red-100 border-2 border-red-500 rounded-lg p-3 w-40 text-center" style="left: 250px; top: 250px;">
+                <div class="text-2xl mb-1">🦹‍♂️</div>
+                <div class="text-xs font-bold text-red-800">偽Wi-Fi<br><span class="text-[10px] font-mono">at_STARBUCKS_Wi2</span><br>(攻撃者設置)</div>
+            </div>
+
+            <div id="device-server" class="draggable bg-purple-100 border-2 border-purple-500 rounded-lg p-3 w-32 text-center" style="left: 500px; top: 150px;">
+                <div class="text-2xl mb-1">🗄️</div>
+                <div class="text-xs font-bold text-purple-800">Webサーバー</div>
+            </div>
+        </div>
+
+        <!-- 右側：設定・シミュレーションパネル -->
+        <div class="w-1/5 bg-white border-l p-4 shadow-inner flex flex-col justify-between overflow-y-auto">
+            <div>
+                <h2 class="font-bold text-lg mb-4 border-b pb-2">シミュレーション設定</h2>
+                
+                <!-- 接続設定 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">【1】PCの接続先</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer p-2 border rounded hover:bg-gray-50">
+                            <input type="radio" name="connection" value="real" class="form-radio text-blue-600" onchange="updateConnection()" checked>
+                            <span class="text-sm">本物Wi-Fi</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer p-2 border rounded hover:bg-gray-50">
+                            <input type="radio" name="connection" value="fake" class="form-radio text-red-600" onchange="updateConnection()">
+                            <span class="text-sm">偽Wi-Fi</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- プロトコル選択 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">【2】通信プロトコル</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer p-2 border rounded hover:bg-gray-50">
+                            <input type="radio" name="protocol" value="http" class="form-radio" checked>
+                            <span class="text-sm">HTTP (暗号化なし)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer p-2 border rounded hover:bg-gray-50">
+                            <input type="radio" name="protocol" value="https" class="form-radio text-green-600">
+                            <span class="text-sm font-bold text-green-700">HTTPS (暗号化あり)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 送信データ入力 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">【3】送信データ</label>
+                    <input type="text" id="loginId" placeholder="ログインID" class="w-full border p-2 mb-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="admin">
+                    <input type="text" id="loginPw" placeholder="パスワード" class="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="secret123">
+                </div>
+            </div>
+
+            <!-- 実行ボタン -->
+            <button onclick="executeSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow-lg transition transform hover:scale-105">
+                通信実行 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- 下部：ログパネル -->
+    <div class="h-64 flex border-t border-gray-400 bg-gray-900 font-mono text-sm">
+        <!-- 攻撃者ログ -->
+        <div class="w-1/2 border-r border-gray-600 p-2 flex flex-col">
+            <div class="text-red-400 font-bold mb-1 border-b border-red-900 pb-1 flex justify-between">
+                <span>🦹‍♂️ 攻撃者（偽Wi-Fi）の盗聴ログ</span>
+                <button onclick="clearLogs()" class="text-xs text-gray-400 hover:text-white">クリア</button>
+            </div>
+            <div id="attackerLog" class="console-box flex-1 text-gray-300"></div>
+        </div>
+        <!-- サーバーログ -->
+        <div class="w-1/2 p-2 flex flex-col">
+            <div class="text-purple-400 font-bold mb-1 border-b border-purple-900 pb-1">
+                🗄️ Webサーバーの受信ログ
+            </div>
+            <div id="serverLog" class="console-box flex-1 text-green-400"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 状態管理 (LocalStorage) ---
+        const STORAGE_KEY = 'wifiSimState';
+        let state = {
+            positions: {
+                pc: { x: 50, y: 150 },
+                realWifi: { x: 250, y: 50 },
+                fakeWifi: { x: 250, y: 250 },
+                server: { x: 500, y: 150 }
+            },
+            connection: 'real' // 'real' or 'fake'
+        };
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // 座標データが存在する場合のみ上書き
+                    if (parsed.positions) {
+                        state.positions = { ...state.positions, ...parsed.positions };
+                    }
+                    if (parsed.connection) {
+                        state.connection = parsed.connection;
+                    }
+                } catch(e) { console.error('State load error', e); }
+            }
+            
+            // UIに状態を反映
+            document.getElementById('device-pc').style.left = state.positions.pc.x + 'px';
+            document.getElementById('device-pc').style.top = state.positions.pc.y + 'px';
+            document.getElementById('device-realWifi').style.left = state.positions.realWifi.x + 'px';
+            document.getElementById('device-realWifi').style.top = state.positions.realWifi.y + 'px';
+            document.getElementById('device-fakeWifi').style.left = state.positions.fakeWifi.x + 'px';
+            document.getElementById('device-fakeWifi').style.top = state.positions.fakeWifi.y + 'px';
+            document.getElementById('device-server').style.left = state.positions.server.x + 'px';
+            document.getElementById('device-server').style.top = state.positions.server.y + 'px';
+
+            document.querySelector(`input[name="connection"][value="${state.connection}"]`).checked = true;
+            updateLines();
+        }
+
+        function resetState() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        // --- ドラッグ＆ドロップ機能 ---
+        let draggedElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        document.querySelectorAll('.draggable').forEach(el => {
+            el.addEventListener('mousedown', (e) => {
+                draggedElement = el;
+                const rect = el.getBoundingClientRect();
+                const parentRect = document.getElementById('canvas').getBoundingClientRect();
+                offsetX = e.clientX - (rect.left - parentRect.left);
+                offsetY = e.clientY - (rect.top - parentRect.top);
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (draggedElement) {
+                const parentRect = document.getElementById('canvas').getBoundingClientRect();
+                let x = e.clientX - parentRect.left - offsetX;
+                let y = e.clientY - parentRect.top - offsetY;
+
+                // 範囲制限
+                x = Math.max(0, Math.min(x, parentRect.width - draggedElement.offsetWidth));
+                y = Math.max(0, Math.min(y, parentRect.height - draggedElement.offsetHeight));
+
+                draggedElement.style.left = x + 'px';
+                draggedElement.style.top = y + 'px';
+
+                // IDからキー名を抽出して状態を更新
+                const key = draggedElement.id.replace('device-', '');
+                state.positions[key] = { x, y };
+
+                updateLines();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (draggedElement) {
+                draggedElement = null;
+                saveState();
+            }
+        });
+
+        // --- 結線描画ロジック ---
+        function updateLines() {
+            const pc = document.getElementById('device-pc');
+            const realWifi = document.getElementById('device-realWifi');
+            const fakeWifi = document.getElementById('device-fakeWifi');
+            const server = document.getElementById('device-server');
+
+            // 中心座標の計算ヘルパー
+            const getCenter = (el) => {
+                return {
+                    x: parseInt(el.style.left || 0) + el.offsetWidth / 2,
+                    y: parseInt(el.style.top || 0) + el.offsetHeight / 2
+                };
+            };
+
+            const pC = getCenter(pc);
+            const rC = getCenter(realWifi);
+            const fC = getCenter(fakeWifi);
+            const sC = getCenter(server);
+
+            // Webサーバーへの固定線
+            const lineReal = document.getElementById('line-real');
+            lineReal.setAttribute('x1', rC.x); lineReal.setAttribute('y1', rC.y);
+            lineReal.setAttribute('x2', sC.x); lineReal.setAttribute('y2', sC.y);
+
+            const lineFake = document.getElementById('line-fake');
+            lineFake.setAttribute('x1', fC.x); lineFake.setAttribute('y1', fC.y);
+            lineFake.setAttribute('x2', sC.x); lineFake.setAttribute('y2', sC.y);
+
+            // PCの接続線
+            const linePc = document.getElementById('line-pc');
+            linePc.setAttribute('x1', pC.x); linePc.setAttribute('y1', pC.y);
+            if (state.connection === 'real') {
+                linePc.setAttribute('x2', rC.x); linePc.setAttribute('y2', rC.y);
+                linePc.setAttribute('stroke', '#10b981'); // green
+            } else {
+                linePc.setAttribute('x2', fC.x); linePc.setAttribute('y2', fC.y);
+                linePc.setAttribute('stroke', '#ef4444'); // red
+            }
+        }
+
+        function updateConnection() {
+            state.connection = document.querySelector('input[name="connection"]:checked').value;
+            updateLines();
+            saveState();
+        }
+
+        // --- シミュレーション・ログ機能 ---
+        function getTimestamp() {
+            const d = new Date();
+            return `[${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}]`;
+        }
+
+        function generateEncryptedString() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+            let result = '';
+            for (let i = 0; i < 32; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function appendLog(elementId, htmlContent) {
+            const logEl = document.getElementById(elementId);
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `<span class="text-gray-500 mr-2">${getTimestamp()}</span> ` + htmlContent;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight; // 一番下へスクロール
+        }
+
+        function clearLogs() {
+            document.getElementById('attackerLog').innerHTML = '';
+            document.getElementById('serverLog').innerHTML = '';
+        }
+
+        function executeSimulation() {
+            const id = document.getElementById('loginId').value || '(空)';
+            const pw = document.getElementById('loginPw').value || '(空)';
+            const protocol = document.querySelector('input[name="protocol"]:checked').value;
+
+            // 視覚エフェクト
+            const pc = document.getElementById('device-pc');
+            pc.style.transform = 'scale(0.9)';
+            setTimeout(() => pc.style.transform = 'scale(1)', 100);
+
+            if (state.connection === 'real') {
+                // 本物Wi-Fiに接続時の挙動
+                appendLog('attackerLog', `<span class="text-gray-500">静かです... (通信を検知できません)</span>`);
+                appendLog('serverLog', `<span>【データ受信】 ID: <span class="text-white">${id}</span>, PW: <span class="text-white">${pw}</span> (正常な経路で到着しました)</span>`);
+            } 
+            else {
+                // 偽Wi-Fiに接続時の挙動
+                if (protocol === 'http') {
+                    // HTTP: 暗号化なし
+                    appendLog('attackerLog', `<span class="text-red-500 font-bold bg-red-900 bg-opacity-30 px-1">【盗聴成功】平文データをキャプチャしました！<br>&nbsp;&nbsp;&nbsp;ID: ${id}, PW: ${pw}</span>`);
+                    appendLog('serverLog', `<span class="text-yellow-400">【受信警告】 ID: ${id}, PW: ${pw}<br>&nbsp;&nbsp;&nbsp;※経路上でデータが漏洩している可能性があります。</span>`);
+                } 
+                else if (protocol === 'https') {
+                    // HTTPS: 暗号化あり
+                    const encryptedData = generateEncryptedString();
+                    appendLog('attackerLog', `<span class="text-gray-400">【暗号化あり】パケットをインターセプトしましたが、SSL/TLSで暗号化されているため解読不能です。<br>&nbsp;&nbsp;&nbsp;データの断片: <span class="text-xs opacity-70">${encryptedData}</span></span>`);
+                    appendLog('serverLog', `<span class="text-green-300">【安全な受信】 安全に暗号化されたデータが届き、サーバー側で復号されました。<br>&nbsp;&nbsp;&nbsp;ID: <span class="text-white">${id}</span>, PW: <span class="text-white">${pw}</span></span>`);
+                }
+            }
+        }
+
+        // 初期化処理
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            updateLines();
+            appendLog('attackerLog', 'システム起動。パケットの監視を開始します...');
+            appendLog('serverLog', 'サーバー待機中...');
+        });
+    </script>
+</body>
+</html>
