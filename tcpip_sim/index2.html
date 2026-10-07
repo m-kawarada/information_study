@@ -474,6 +474,7 @@
           devices: [
             { id: 'q3_pc1', type: 'PC', name: 'PC-1', x: 80, y: 130, ip: '192.168.1.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:33:01:01' },
             { id: 'q3_r1', type: 'Router', name: 'Router-1', x: 260, y: 130, ip: '192.168.1.1', mask: '255.255.255.0', ip2: '192.168.2.1', mask2: '255.255.255.0', routes: [], mac: '00:1A:2B:33:02:01', mac2: '00:1A:2C:33:02:02' },
+            // Web-Server のDGが 192.168.1.1 になっているミス（正しくは 192.168.2.1）
             { id: 'q3_sv1', type: 'Server', name: 'Web-Server', x: 440, y: 130, ip: '192.168.2.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:33:03:01' }
           ],
           links: [
@@ -1551,7 +1552,6 @@
     }
 
     function resolveRouterNextHop(router, destIp) {
-      // 1. 直結チェック
       if (isSameSubnet(router.ip, destIp, router.mask)) {
         return { type: 'DIRECT', egressIfIp: router.ip, egressMac: router.mac, nextHopIp: destIp };
       }
@@ -1559,7 +1559,6 @@
         return { type: 'DIRECT', egressIfIp: router.ip2, egressMac: router.mac2, nextHopIp: destIp };
       }
 
-      // 2. 静的ルートチェック (最長一致 Longest Prefix Match)
       let bestMatch = null;
       let maxPrefix = -1;
 
@@ -1619,7 +1618,7 @@
       return true;
     }
 
-    // --- 往復マルチホップ転送エンジン ---
+    // --- ★ 往復マルチホップ転送エンジン（第3問バグ修正済み） ---
     async function routeMultiHop(srcDev, dstDev, reqColor = '#38bdf8', resColor = '#4ade80') {
       // 1. 同一LAN
       if (isSameSubnet(srcDev.ip, dstDev.ip, srcDev.mask)) {
@@ -1649,19 +1648,19 @@
         return retOk;
       }
 
-      // 2. 外部ネットワーク（往路）
+      // 2. 外部ネットワーク
       if (!srcDev.gw) {
-        addLog(`❌【GW未設定】${srcDev.name} にデフォルトゲートウェイが設定されていません。`, 'text-rose-400 font-bold');
+        addLog(`❌【GW未設定】${srcDev.name} にデフォルトゲートウェイが設定されていません。`, 'text-rose-400');
         return false;
       }
       if (!isSameSubnet(srcDev.ip, srcDev.gw, srcDev.mask)) {
-        addLog(`❌【GW不整合】${srcDev.name} のDG (${srcDev.gw}) が自身のサブネット外です。`, 'text-rose-400 font-bold');
+        addLog(`❌【GW不整合】${srcDev.name} のDG (${srcDev.gw}) が自身のサブネット外です。`, 'text-rose-400');
         return false;
       }
 
       let currentRouter = devices.find(d => d.type === 'Router' && (d.ip === srcDev.gw || d.ip2 === srcDev.gw));
       if (!currentRouter) {
-        addLog(`❌【通信不可】DG (${srcDev.gw}) を持つルータがネットワーク上に存在しません。`, 'text-rose-400 font-bold');
+        addLog(`❌【通信不可】DG (${srcDev.gw}) を持つルータがネットワーク上に存在しません。`, 'text-rose-400');
         return false;
       }
 
@@ -1706,7 +1705,7 @@
         } else {
           const nextHopRouter = devices.find(d => d.type === 'Router' && (d.ip === routeResult.nextHopIp || d.ip2 === routeResult.nextHopIp));
           if (!nextHopRouter) {
-            addLog(`❌【NextHop到達不能】${currentRouter.name} が指定したNext Hop (${routeResult.nextHopIp}) を持つルータが存在しません。`, 'text-rose-400 font-bold');
+            addLog(`❌【NextHop到達不能】${currentRouter.name} が指定したNext Hop (${routeResult.nextHopIp}) を持つルータが存在しません。`, 'text-rose-400');
             return false;
           }
           if (visitedRouters.has(nextHopRouter.id)) {
@@ -1728,31 +1727,30 @@
         }
       }
 
-      // === 戻り（Echo Reply）の検証と転送 ===
+      // === ★ 戻り（Echo Reply）の厳密なDG検証（第3問バグ修正箇所） ===
       addLog(`📦 [受信完了] ${dstDev.name} がパケットを受信。応答(Echo Reply)を返信します...`);
 
       if (dstDev.type !== 'Router') {
+        // 1. DG設定の有無
         if (!dstDev.gw) {
-          addLog(`❌【戻り失敗】${dstDev.name} にデフォルトゲートウェイが設定されていません。`, 'text-rose-400 font-bold');
+          addLog(`❌【戻り失敗】${dstDev.name} にデフォルトゲートウェイが未設定のため、返信パケットを外部へ戻せません。`, 'text-rose-400 font-bold');
           return false;
         }
 
+        // 2. 設定されたDGが自身のサブネット内にあるか
         if (!isSameSubnet(dstDev.ip, dstDev.gw, dstDev.mask)) {
-          const dstNetStr = intToIp((ipToInt(dstDev.ip) & ipToInt(dstDev.mask)) >>> 0);
-          addLog(`❌【戻り失敗】${dstDev.name} のDG (${dstDev.gw}) は自身のネットワーク (${dstNetStr}) 外です。ルータの対向側IPを指定してください。`, 'text-rose-400 font-bold');
+          addLog(`❌【戻り失敗】${dstDev.name} のデフォルトゲートウェイ (${dstDev.gw}) は自身のサブネット (${dstDev.mask}) 外にあり、到達できません！`, 'text-rose-400 font-bold');
           return false;
         }
 
-        const replyGwRouter = devices.find(d => d.type === 'Router' && (d.ip === dstDev.gw || d.ip2 === dstDev.gw));
-        if (!replyGwRouter) {
-          addLog(`❌【戻り失敗】${dstDev.name} のDG (${dstDev.gw}) を持つルータがネットワーク上に存在しません。`, 'text-rose-400 font-bold');
-          return false;
-        }
-
+        // 3. 直結している最終ホップ元ルータのインターフェースIPと一致しているか
         const lastHopRouter = traversedHops[traversedHops.length - 1].from;
-        if (replyGwRouter.id !== lastHopRouter.id || (lastHopRouter.ip !== dstDev.gw && lastHopRouter.ip2 !== dstDev.gw)) {
-          addLog(`❌【戻り失敗】${dstDev.name} のDG設定が直結ルータのインターフェースIPと一致していません。`, 'text-rose-400 font-bold');
-          return false;
+        if (lastHopRouter.type === 'Router') {
+          const validRouterIps = [lastHopRouter.ip, lastHopRouter.ip2].filter(Boolean);
+          if (!validRouterIps.includes(dstDev.gw)) {
+            addLog(`❌【戻り失敗】${dstDev.name} のデフォルトゲートウェイ (${dstDev.gw}) が、直結ルータ ${lastHopRouter.name} のインターフェースIP (${validRouterIps.join(' / ')}) と一致していません！`, 'text-rose-400 font-bold');
+            return false;
+          }
         }
       }
 
@@ -1917,7 +1915,6 @@
       pingBtn.classList.remove('opacity-50');
     }
 
-    // --- ビット演算モーダル ---
     function updateBitModalLive() {
       const srcId = document.getElementById('srcDeviceSelect').value;
       const dstRaw = document.getElementById('dstInput').value.trim();
