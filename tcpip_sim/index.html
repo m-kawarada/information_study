@@ -12,17 +12,20 @@
       0%, 100% { r: 6px; opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
       50% { r: 9px; opacity: 0.85; filter: drop-shadow(0 0 10px currentColor); }
     }
-    .packet-dot {
-      animation: packet-pulse 0.8s infinite alternate;
-    }
+    .packet-dot { animation: packet-pulse 0.8s infinite alternate; }
     .bit-net { color: #38bdf8; font-weight: bold; background: rgba(56, 189, 248, 0.15); border-radius: 2px; }
     .bit-host { color: #f472b6; font-weight: bold; background: rgba(244, 114, 182, 0.15); border-radius: 2px; }
+    .mac-change { animation: highlight-mac 1.2s ease-in-out; }
+    @keyframes highlight-mac {
+      0% { background-color: rgba(251, 191, 36, 0.5); }
+      100% { background-color: transparent; }
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex flex-col no-select font-sans">
 
   <!-- ヘッダー -->
-  <header class="bg-slate-800 text-white px-6 py-3 flex justify-between items-center shadow-md z-20">
+  <header class="bg-slate-800 text-white px-6 py-2.5 flex justify-between items-center shadow-md z-20">
     <div class="flex items-center space-x-3">
       <span class="text-xl">🌐</span>
       <h1 class="text-lg font-bold tracking-wide">TCP/IP ネットワーク学習シミュレーター</h1>
@@ -30,16 +33,16 @@
         挑戦中: <span id="currentQuizTitle"></span>
       </span>
     </div>
-    <div class="flex items-center space-x-3 text-sm">
-      <button onclick="openQuizModal()" class="bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded transition shadow flex items-center gap-1.5 font-bold">
-        <span>🎯</span> 課題・問題モード
+    <div class="flex items-center space-x-2.5 text-xs">
+      <button onclick="openQuizModal()" class="bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded transition shadow flex items-center gap-1 font-bold">
+        <span>🎯</span> 課題モード
       </button>
       <button id="cableModeBtn" onclick="toggleCableMode()" class="bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded transition shadow flex items-center gap-1 font-semibold">
-        🔌 配線モード: OFF
+        🔌 配線: OFF
       </button>
-      <button onclick="clearAllArpCaches()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded transition shadow">ARP全消去</button>
-      <button onclick="clearAll()" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded transition shadow">全消去</button>
-      <button onclick="saveToStorage()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded transition shadow">保存</button>
+      <button onclick="clearAllArpCaches()" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 rounded transition shadow">ARP全消去</button>
+      <button onclick="clearAll()" class="bg-rose-600 hover:bg-rose-700 px-2.5 py-1.5 rounded transition shadow">全消去</button>
+      <button onclick="saveToStorage()" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded transition shadow">保存</button>
     </div>
   </header>
 
@@ -47,7 +50,7 @@
   <div class="flex-1 flex overflow-hidden">
 
     <!-- 1. 左側パレット -->
-    <aside class="w-48 bg-white border-r border-slate-200 p-4 flex flex-col gap-2 shadow-sm z-20">
+    <aside class="w-48 bg-white border-r border-slate-200 p-3.5 flex flex-col gap-2 shadow-sm z-20">
       <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">機器を追加</h2>
       <button onclick="addDevice('PC')" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition text-left">
         <span class="text-lg">💻</span><span class="text-xs font-medium">PC</span>
@@ -56,20 +59,20 @@
         <span class="text-lg">🖨️</span><span class="text-xs font-medium">プリンタ</span>
       </button>
       <button onclick="addDevice('Server')" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition text-left">
-        <span class="text-lg">🗄️</span><span class="text-xs font-medium">Web/ファイルサーバ</span>
+        <span class="text-lg">🗄️</span><span class="text-xs font-medium">サーバ</span>
       </button>
       <button onclick="addDevice('DNSServer')" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition text-left">
         <span class="text-lg">🔤</span><span class="text-xs font-medium font-bold text-indigo-700">DNSサーバ</span>
       </button>
       <button onclick="addDevice('Router')" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition text-left">
-        <span class="text-lg">🌐</span><span class="text-xs font-medium">ルータ</span>
+        <span class="text-lg">🌐</span><span class="text-xs font-medium font-bold text-blue-700">ルータ (L3)</span>
       </button>
       <button onclick="addDevice('Switch')" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition text-left">
         <span class="text-lg">🔀</span><span class="text-xs font-medium">L2スイッチ</span>
       </button>
 
-      <!-- 課題モード中の指示ボックス -->
-      <div id="quizPromptBox" class="hidden mt-3 bg-amber-50 border border-amber-200 rounded p-2.5 text-xs text-amber-900 leading-relaxed shadow-sm">
+      <!-- 課題モード枠 -->
+      <div id="quizPromptBox" class="hidden mt-2 bg-amber-50 border border-amber-200 rounded p-2.5 text-xs text-amber-900 leading-relaxed shadow-sm">
         <div class="font-bold flex justify-between items-center text-amber-800 mb-1">
           <span>📋 達成目標</span>
           <button onclick="quitQuizMode()" class="text-slate-400 hover:text-slate-600 font-normal text-[11px] underline">中断</button>
@@ -87,23 +90,22 @@
     <!-- 2. 中央キャンバスエリア -->
     <main class="flex-1 flex flex-col relative bg-slate-50 overflow-hidden">
       <!-- ツールバー -->
-      <div class="bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-2.5 flex items-center gap-3 z-10 shadow-sm flex-wrap">
+      <div class="bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-2 flex items-center gap-3 z-10 shadow-sm flex-wrap">
         <div class="flex items-center gap-2">
           <label class="text-xs font-semibold text-slate-600">送信元:</label>
-          <select id="srcDeviceSelect" onchange="onEndpointSelectionChanged()" class="text-sm border border-slate-300 rounded px-2 py-1 bg-white focus:outline-blue-500"></select>
+          <select id="srcDeviceSelect" onchange="onEndpointSelectionChanged()" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white focus:outline-blue-500"></select>
         </div>
         <div class="text-slate-400">➡️</div>
         <div class="flex items-center gap-2">
-          <label class="text-xs font-semibold text-slate-600">宛先 (機器 または ドメイン名):</label>
-          <input type="text" id="dstInput" oninput="onEndpointSelectionChanged()" placeholder="例: PC-2 または example.com" list="dstDeviceList" class="text-sm border border-slate-300 rounded px-2.5 py-1 bg-white focus:outline-blue-500 w-64" />
+          <label class="text-xs font-semibold text-slate-600">宛先 (機器 または ドメイン):</label>
+          <input type="text" id="dstInput" oninput="onEndpointSelectionChanged()" placeholder="例: PC-2 または example.com" list="dstDeviceList" class="text-xs border border-slate-300 rounded px-2.5 py-1 bg-white focus:outline-blue-500 w-56" />
           <datalist id="dstDeviceList"></datalist>
         </div>
-        <button id="pingBtn" onclick="runPingSimulation()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-1 rounded shadow transition">
+        <button id="pingBtn" onclick="runPingSimulation()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 rounded shadow transition">
           通信テスト実行
         </button>
-        <!-- 常に最新状態を反映して確認できるボタン -->
-        <button id="showBitBtn" onclick="openBitModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-600 text-sm font-semibold px-3 py-1 rounded shadow transition flex items-center gap-1.5">
-          <span>🔍</span> 2進数AND演算を確認
+        <button id="showBitBtn" onclick="openBitModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-600 text-xs font-semibold px-3 py-1.5 rounded shadow transition flex items-center gap-1.5">
+          <span>🔍</span> 2進数AND演算
         </button>
       </div>
 
@@ -112,105 +114,160 @@
         <svg id="svgLayer" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
       </div>
 
+      <!-- パケットヘッダ監視パネル（L2 MAC 付け替え追跡） -->
+      <div id="packetInspector" class="bg-slate-900 border-t border-slate-700 text-white p-3 font-mono text-xs z-10 transition-all">
+        <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400 font-bold">📦 パケットヘッダ監視パネル (L2 MAC 付け替え追跡)</span>
+            <span id="inspectHopBadge" class="bg-slate-800 text-sky-300 border border-slate-700 px-2 py-0.5 rounded text-[11px]">待機中</span>
+          </div>
+          <div class="text-[11px] text-slate-400">
+            <span class="text-emerald-400">● IPは目的地まで不変</span> / <span class="text-amber-400">● MACはルータ毎に付け替え</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-950 p-2.5 rounded border border-amber-900/40">
+            <div class="text-amber-400 font-bold mb-1 flex justify-between">
+              <span>【L2】Ethernet Frame (ホップ毎に再カプセル化)</span>
+              <span class="text-[10px] text-amber-300/80">毎回変化 🔄</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div>送信元 MAC: <span id="hdrSrcMac" class="text-amber-300 font-bold">-</span></div>
+              <div>宛先 MAC: <span id="hdrDstMac" class="text-amber-300 font-bold">-</span></div>
+            </div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded border border-sky-900/40">
+            <div class="text-sky-400 font-bold mb-1 flex justify-between">
+              <span>【L3】IPv4 Packet (エンドツーエンド通信)</span>
+              <span class="text-[10px] text-sky-300/80">終点まで不変 🔒</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px]">
+              <div>送信元 IP: <span id="hdrSrcIp" class="text-sky-300 font-bold">-</span></div>
+              <div>宛先 IP: <span id="hdrDstIp" class="text-sky-300 font-bold">-</span></div>
+              <div>TTL: <span id="hdrTtl" class="text-rose-400 font-bold">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ログコンソール -->
-      <div class="h-48 bg-slate-900 border-t border-slate-700 flex flex-col font-mono text-xs z-10">
-        <div class="bg-slate-950 px-4 py-1 text-slate-400 font-semibold border-b border-slate-800 flex justify-between">
-          <span>通信ログ / 判定トレース</span>
+      <div class="h-36 bg-slate-950 border-t border-slate-800 flex flex-col font-mono text-xs z-10">
+        <div class="bg-black/60 px-4 py-1 text-slate-400 font-semibold border-b border-slate-800 flex justify-between text-[11px]">
+          <span>通信ログ / ルーティングトレース</span>
           <button onclick="document.getElementById('logContainer').innerHTML=''" class="hover:text-slate-200">クリア</button>
         </div>
-        <div id="logContainer" class="flex-1 p-3 overflow-y-auto space-y-1 text-slate-200">
+        <div id="logContainer" class="flex-1 p-2.5 overflow-y-auto space-y-1 text-slate-200 text-[11px]">
           <div class="text-slate-500">ネットワーク上の通信イベントがここに表示されます...</div>
         </div>
       </div>
     </main>
 
     <!-- 3. 右側設定パネル -->
-    <aside id="configPanel" class="w-84 bg-white border-l border-slate-200 p-5 flex flex-col shadow-sm z-20 hidden overflow-y-auto">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+    <aside id="configPanel" class="w-84 bg-white border-l border-slate-200 p-4 flex flex-col shadow-sm z-20 hidden overflow-y-auto">
+      <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
           <span id="panelIcon">💻</span>
           <span id="panelTitle">機器設定</span>
         </h3>
         <button onclick="closeConfigPanel()" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
       </div>
 
-      <div class="space-y-3.5 text-sm flex-1">
+      <div class="space-y-3 text-xs flex-1">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">表示名</label>
+          <label class="block font-semibold text-slate-600 mb-1">表示名</label>
           <input type="text" id="cfgName" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
         </div>
 
-        <div id="macDisplayDiv" class="bg-slate-50 p-2 rounded border border-slate-200 text-xs">
-          <span class="text-slate-500 font-semibold">MACアドレス:</span>
+        <div id="macDisplayDiv" class="bg-slate-50 p-2 rounded border border-slate-200">
+          <span class="text-slate-500 font-semibold">MACアドレス (IF1):</span>
           <span id="cfgMac" class="font-mono text-slate-700 ml-1"></span>
         </div>
 
-        <div id="ipConfigSection" class="space-y-3">
+        <div id="ipConfigSection" class="space-y-2.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">IPv4 アドレス</label>
+            <label class="block font-semibold text-slate-600 mb-0.5">IPv4 アドレス (IF1)</label>
             <input type="text" id="cfgIp" placeholder="192.168.1.10" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">サブネットマスク <span class="text-blue-500 font-normal">(/24 等も可)</span></label>
+            <label class="block font-semibold text-slate-600 mb-0.5">サブネットマスク <span class="text-blue-500 font-normal">(/24 等も可)</span></label>
             <input type="text" id="cfgMask" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
           </div>
           <div id="gwConfigDiv">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">デフォルトゲートウェイ</label>
+            <label class="block font-semibold text-slate-600 mb-0.5">デフォルトゲートウェイ</label>
             <input type="text" id="cfgGw" placeholder="192.168.1.1" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div id="dnsConfigDiv">
-            <label class="block text-xs font-semibold text-indigo-700 mb-1">優先DNSサーバ (IPv4)</label>
+            <label class="block font-semibold text-indigo-700 mb-0.5">優先DNSサーバ (IPv4)</label>
             <input type="text" id="cfgDns" placeholder="例: 192.168.1.53" class="w-full border border-indigo-200 bg-indigo-50/30 rounded px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
         </div>
 
         <!-- ルータ専用IF2 -->
-        <div id="routerExtraSection" class="space-y-3 pt-3 border-t border-slate-200 hidden">
-          <div class="text-xs font-bold text-blue-600">ルータ第2インターフェース (IF2)</div>
-          <div class="bg-slate-50 p-2 rounded border border-slate-200 text-xs">
+        <div id="routerExtraSection" class="space-y-2.5 pt-2.5 border-t border-slate-200 hidden">
+          <div class="font-bold text-blue-600">ルータ第2インターフェース (IF2)</div>
+          <div class="bg-slate-50 p-2 rounded border border-slate-200">
             <span class="text-slate-500 font-semibold">IF2 MACアドレス:</span>
             <span id="cfgMac2" class="font-mono text-slate-700 ml-1"></span>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">IF2 IPv4 アドレス</label>
+            <label class="block font-semibold text-slate-600 mb-0.5">IF2 IPv4 アドレス</label>
             <input type="text" id="cfgIp2" placeholder="192.168.2.1" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" oninput="updateCurrentNode()">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">IF2 サブネットマスク</label>
+            <label class="block font-semibold text-slate-600 mb-0.5">IF2 サブネットマスク</label>
             <input type="text" id="cfgMask2" placeholder="255.255.255.0 または /24" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:border-blue-500 focus:outline-none" onchange="normalizeMaskInput(this)" oninput="updateCurrentNode()">
           </div>
         </div>
 
-        <!-- DNS専用Aレコード -->
-        <div id="dnsRecordSection" class="pt-3 border-t border-slate-200 hidden">
+        <!-- ルータ専用: 静的ルーティングテーブル管理 -->
+        <div id="routerRoutingSection" class="pt-3 border-t border-slate-200 hidden">
           <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs font-bold text-indigo-700">🔤 DNSゾーン設定 (Aレコード)</span>
+            <span class="font-bold text-blue-700">🗺️ ルーティングテーブル (静的経路)</span>
           </div>
-          <div id="dnsRecordList" class="space-y-1 mb-2 max-h-36 overflow-y-auto"></div>
+          <div id="routingTableList" class="space-y-1 mb-2 max-h-36 overflow-y-auto"></div>
+          <div class="space-y-1.5 bg-slate-50 p-2 rounded border border-slate-200">
+            <div class="text-[11px] font-semibold text-slate-600">経路追加 (手動ルート):</div>
+            <input type="text" id="newRouteDest" placeholder="宛先NW (例: 192.168.3.0)" class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
+            <div class="flex gap-1.5">
+              <input type="text" id="newRouteMask" placeholder="マスク (255.255.255.0)" class="w-1/2 border border-slate-300 rounded px-2 py-1 text-xs" onchange="normalizeMaskInput(this)">
+              <input type="text" id="newRouteNextHop" placeholder="Next Hop IP" class="w-1/2 border border-slate-300 rounded px-2 py-1 text-xs">
+            </div>
+            <button onclick="addStaticRoute()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 rounded text-xs">
+              ルートを追加
+            </button>
+          </div>
+        </div>
+
+        <!-- DNS専用Aレコード -->
+        <div id="dnsRecordSection" class="pt-2.5 border-t border-slate-200 hidden">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-indigo-700">🔤 DNSゾーン設定 (Aレコード)</span>
+          </div>
+          <div id="dnsRecordList" class="space-y-1 mb-2 max-h-32 overflow-y-auto"></div>
           <div class="flex gap-1.5">
-            <input type="text" id="newDnsDomain" placeholder="example.com" class="text-xs border border-slate-300 rounded px-2 py-1 flex-1">
-            <input type="text" id="newDnsIp" placeholder="対応IP" class="text-xs border border-slate-300 rounded px-2 py-1 w-24">
-            <button onclick="addDnsRecord()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1 rounded">追加</button>
+            <input type="text" id="newDnsDomain" placeholder="example.com" class="border border-slate-300 rounded px-2 py-1 flex-1 text-xs">
+            <input type="text" id="newDnsIp" placeholder="対応IP" class="border border-slate-300 rounded px-2 py-1 w-20 text-xs">
+            <button onclick="addDnsRecord()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs">追加</button>
           </div>
         </div>
 
         <!-- ARPテーブル -->
-        <div id="arpTableSection" class="pt-3 border-t border-slate-200">
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs font-bold text-slate-700">📑 ARPテーブル (キャッシュ)</span>
+        <div id="arpTableSection" class="pt-2.5 border-t border-slate-200">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-slate-700">📑 ARPテーブル (キャッシュ)</span>
             <button onclick="clearCurrentArp()" class="text-[11px] text-rose-500 hover:text-rose-700">消去</button>
           </div>
-          <div id="arpTableContent" class="bg-slate-900 text-slate-200 p-2 rounded font-mono text-[11px] min-h-[40px] max-h-32 overflow-y-auto"></div>
+          <div id="arpTableContent" class="bg-slate-900 text-slate-200 p-2 rounded font-mono text-[11px] min-h-[36px] max-h-28 overflow-y-auto"></div>
         </div>
 
         <div class="pt-2 border-t border-slate-100">
-          <div class="text-xs font-semibold text-slate-500 mb-1">接続中のケーブル:</div>
-          <div id="connectedLinksList" class="text-xs text-slate-600 space-y-1"></div>
+          <div class="font-semibold text-slate-500 mb-1">接続中のケーブル:</div>
+          <div id="connectedLinksList" class="text-slate-600 space-y-1"></div>
         </div>
       </div>
 
-      <div class="pt-4 border-t border-slate-100">
-        <button onclick="deleteCurrentNode()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 py-1.5 rounded text-sm font-semibold transition">
+      <div class="pt-3 border-t border-slate-100">
+        <button onclick="deleteCurrentNode()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 py-1.5 rounded text-xs font-semibold transition">
           この機器を削除
         </button>
       </div>
@@ -237,7 +294,6 @@
           </div>
         </div>
         <div class="overflow-x-auto space-y-3">
-          <!-- 送信元IPの計算 -->
           <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
             <div class="text-slate-400 font-bold mb-1">【送信元のネットワークアドレス計算】</div>
             <div class="grid grid-cols-12 gap-1 text-slate-300 leading-relaxed">
@@ -253,7 +309,6 @@
               <div id="bitSrcNetBin" class="col-span-6 font-bold tracking-wider text-emerald-300"></div>
             </div>
           </div>
-          <!-- 宛先IPの計算 -->
           <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
             <div class="text-slate-400 font-bold mb-1">【宛先IPのネットワークアドレス計算（送信元マスク適用）】</div>
             <div class="grid grid-cols-12 gap-1 text-slate-300 leading-relaxed">
@@ -288,7 +343,6 @@
         </div>
         <button onclick="closeQuizModal()" class="text-slate-300 hover:text-white text-xl font-bold">&times;</button>
       </div>
-
       <div class="flex border-b border-slate-200 bg-slate-50 px-6 text-sm">
         <button id="tabQuizListBtn" onclick="switchQuizTab('list')" class="py-2.5 px-4 font-bold border-b-2 border-violet-600 text-violet-700">
           📋 課題一覧 (生徒用)
@@ -297,51 +351,27 @@
           ✏️ 課題エディタ (教員用)
         </button>
       </div>
-
       <div id="quizListTab" class="p-6 overflow-y-auto flex-1 space-y-3">
-        <div class="text-xs text-slate-500 mb-2">
-          設定に誤りがあるネットワーク構成を読み込みます。通信が成立するように原因を特定して修正してください。
-        </div>
         <div id="quizCardsContainer" class="space-y-3"></div>
       </div>
-
       <div id="quizEditTab" class="p-6 overflow-y-auto flex-1 hidden space-y-4 text-xs">
         <div class="flex justify-between items-center bg-indigo-50 border border-indigo-200 p-3 rounded text-indigo-900">
           <span>💡 現在のキャンバスに配置されている機器・配線構成を、新しい課題トポロジとして登録できます。</span>
-          <button onclick="resetQuizzesToDefault()" class="text-rose-600 hover:underline font-bold text-xs">初期5題に戻す</button>
+          <button onclick="resetQuizzesToDefault()" class="text-rose-600 hover:underline font-bold text-xs">初期課題に戻す</button>
         </div>
-
         <div class="space-y-3 bg-white border border-slate-200 p-4 rounded-lg shadow-sm">
           <h4 class="font-bold text-slate-800 text-sm">新規課題の追加</h4>
-          <div>
-            <label class="block font-semibold text-slate-600 mb-1">課題タイトル</label>
-            <input id="newQTitle" class="w-full border border-slate-300 rounded p-1.5" placeholder="例: 第6問: 外部サーバへのルーティング">
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-600 mb-1">課題内容 (問題文)</label>
-            <textarea id="newQTask" rows="2" class="w-full border border-slate-300 rounded p-1.5" placeholder="例: PC-1からServer-1へ通信できません。原因を特定して設定を修正してください。"></textarea>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-600 mb-1">ヒント</label>
-            <input id="newQHint" class="w-full border border-slate-300 rounded p-1.5" placeholder="例: サブネットマスクとデフォルトゲートウェイの整合性を確認しよう。">
-          </div>
+          <input id="newQTitle" class="w-full border border-slate-300 rounded p-1.5" placeholder="課題タイトル">
+          <textarea id="newQTask" rows="2" class="w-full border border-slate-300 rounded p-1.5" placeholder="問題文"></textarea>
+          <input id="newQHint" class="w-full border border-slate-300 rounded p-1.5" placeholder="ヒント">
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">クリア判定の送信元 (機器名)</label>
-              <input id="newQSrc" class="w-full border border-slate-300 rounded p-1.5" placeholder="PC-1">
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">クリア判定の宛先 (機器名 または ドメイン)</label>
-              <input id="newQDst" class="w-full border border-slate-300 rounded p-1.5" placeholder="Server-1 または example.com">
-            </div>
+            <input id="newQSrc" class="border border-slate-300 rounded p-1.5" placeholder="送信元機器名 (PC-1)">
+            <input id="newQDst" class="border border-slate-300 rounded p-1.5" placeholder="宛先名 (Server-1)">
           </div>
-          <div>
-            <button onclick="saveCurrentCanvasAsQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition">
-              💾 現在のキャンバス構成を取り込んで課題を作成
-            </button>
-          </div>
+          <button onclick="saveCurrentCanvasAsQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition">
+            💾 現在のキャンバス構成を取り込んで課題を作成
+          </button>
         </div>
-
         <div class="space-y-2">
           <h4 class="font-bold text-slate-800 text-sm">登録済み課題の管理</h4>
           <div id="registeredQuizList" class="space-y-2"></div>
@@ -357,17 +387,17 @@
       <h3 class="text-xl font-extrabold text-emerald-600 mb-1">課題クリア！</h3>
       <p class="text-sm font-semibold text-slate-700 mb-3" id="clearQuizName"></p>
       <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-900 leading-relaxed text-left mb-4">
-        ✨ すべての設定不備が解消され、パケットの正常な往復疎通（Ping/HTTP）が確認できました！
+        ✨ パケットヘッダのMACアドレス付け替えおよびルーティングが完璧に実行されました！
       </div>
       <button onclick="closeClearModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition shadow">
-        素晴らしい！続ける
+        完了
       </button>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'simple_tcpip_sim_v9';
-    const QUIZ_STORAGE_KEY = 'simple_tcpip_quizzes_v2';
+    const STORAGE_KEY = 'simple_tcpip_sim_v12';
+    const QUIZ_STORAGE_KEY = 'simple_tcpip_quizzes_v5';
 
     let devices = [];
     let links = [];
@@ -381,7 +411,7 @@
     const ICONS = {
       PC: '💻',
       Printer: '🖨️',
-      Server: '🗄️️',
+      Server: '🗄️',
       DNSServer: '🔤',
       Router: '🌐',
       Switch: '🔀'
@@ -443,7 +473,8 @@
         data: {
           devices: [
             { id: 'q3_pc1', type: 'PC', name: 'PC-1', x: 80, y: 130, ip: '192.168.1.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:33:01:01' },
-            { id: 'q3_r1', type: 'Router', name: 'Router-1', x: 260, y: 130, ip: '192.168.1.1', mask: '255.255.255.0', ip2: '192.168.2.1', mask2: '255.255.255.0', mac: '00:1A:2B:33:02:01', mac2: '00:1A:2C:33:02:02' },
+            { id: 'q3_r1', type: 'Router', name: 'Router-1', x: 260, y: 130, ip: '192.168.1.1', mask: '255.255.255.0', ip2: '192.168.2.1', mask2: '255.255.255.0', routes: [], mac: '00:1A:2B:33:02:01', mac2: '00:1A:2C:33:02:02' },
+            // Web-Server のDGが 192.168.1.1 になっているミス（正しくは 192.168.2.1）
             { id: 'q3_sv1', type: 'Server', name: 'Web-Server', x: 440, y: 130, ip: '192.168.2.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:33:03:01' }
           ],
           links: [
@@ -495,6 +526,28 @@
             { id: 'l3', from: 'q5_sw1', to: 'q5_sv1' }
           ]
         }
+      },
+      {
+        id: 'quiz_6',
+        title: '第6問: 2台のルータを経由するマルチホップルーティング',
+        category: 'WAN & ルータ間通信',
+        description: 'PC-1 から 2台のルータ（Router-A, Router-B）を越えて Server-1 へ通信できません。Router-A に宛先ネットワーク（192.168.3.0/24）への静的ルートを追加してください。',
+        hint: 'Router-A の設定パネルで静的ルーティングテーブルに「宛先: 192.168.3.0 / マスク: 255.255.255.0 / Next Hop: 10.0.0.2」を追加しよう！',
+        targetSrc: 'PC-1',
+        targetDst: 'Server-1',
+        data: {
+          devices: [
+            { id: 'q6_pc1', type: 'PC', name: 'PC-1', x: 50, y: 140, ip: '192.168.1.10', mask: '255.255.255.0', gw: '192.168.1.1', dns: '', arpTable: {}, mac: '00:1A:2B:66:01:01' },
+            { id: 'q6_ra', type: 'Router', name: 'Router-A', x: 210, y: 140, ip: '192.168.1.1', mask: '255.255.255.0', ip2: '10.0.0.1', mask2: '255.255.255.0', routes: [], arpTable: {}, mac: '00:1A:2B:66:02:01', mac2: '00:1A:2C:66:02:02' },
+            { id: 'q6_rb', type: 'Router', name: 'Router-B', x: 380, y: 140, ip: '10.0.0.2', mask: '255.255.255.0', ip2: '192.168.3.1', mask2: '255.255.255.0', routes: [{ dest: '192.168.1.0', mask: '255.255.255.0', nextHop: '10.0.0.1' }], arpTable: {}, mac: '00:1A:2B:66:03:01', mac2: '00:1A:2C:66:03:02' },
+            { id: 'q6_sv1', type: 'Server', name: 'Server-1', x: 540, y: 140, ip: '192.168.3.10', mask: '255.255.255.0', gw: '192.168.3.1', dns: '', arpTable: {}, mac: '00:1A:2B:66:04:01' }
+          ],
+          links: [
+            { id: 'l1', from: 'q6_pc1', to: 'q6_ra' },
+            { id: 'l2', from: 'q6_ra', to: 'q6_rb' },
+            { id: 'l3', from: 'q6_rb', to: 'q6_sv1' }
+          ]
+        }
       }
     ];
 
@@ -510,11 +563,8 @@
     function loadQuizzes() {
       const raw = localStorage.getItem(QUIZ_STORAGE_KEY);
       if (raw) {
-        try {
-          quizList = JSON.parse(raw);
-        } catch (e) {
-          quizList = JSON.parse(JSON.stringify(DEFAULT_QUIZZES));
-        }
+        try { quizList = JSON.parse(raw); }
+        catch (e) { quizList = JSON.parse(JSON.stringify(DEFAULT_QUIZZES)); }
       } else {
         quizList = JSON.parse(JSON.stringify(DEFAULT_QUIZZES));
         saveQuizzes();
@@ -526,7 +576,7 @@
     }
 
     function resetQuizzesToDefault() {
-      if (confirm('課題データを初期の5題に戻しますか？')) {
+      if (confirm('課題データを初期の6題に戻しますか？')) {
         quizList = JSON.parse(JSON.stringify(DEFAULT_QUIZZES));
         saveQuizzes();
         renderQuizModalContent();
@@ -566,20 +616,20 @@
 
       quizList.forEach((q) => {
         const card = document.createElement('div');
-        card.className = 'border border-slate-200 hover:border-violet-300 rounded-lg p-3.5 bg-slate-50 hover:bg-violet-50/40 transition flex justify-between items-center';
+        card.className = 'border border-slate-200 hover:border-violet-300 rounded-lg p-3 bg-slate-50 hover:bg-violet-50/40 transition flex justify-between items-center';
         card.innerHTML = `
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded">${q.category || 'トラブル'}</span>
-              <h4 class="font-bold text-slate-800 text-sm">${q.title}</h4>
+              <span class="text-[11px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded">${q.category || 'トラブル'}</span>
+              <h4 class="font-bold text-slate-800 text-xs">${q.title}</h4>
             </div>
             <p class="text-xs text-slate-600">${q.description}</p>
             <div class="text-[11px] text-slate-500">
               🎯 目標: <b>${q.targetSrc}</b> ──> <b>${q.targetDst}</b> への通信成功
             </div>
           </div>
-          <button onclick="startQuiz('${q.id}')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition whitespace-nowrap ml-4">
-            この問題に挑戦
+          <button onclick="startQuiz('${q.id}')" class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg shadow transition whitespace-nowrap ml-4">
+            挑戦
           </button>
         `;
         container.appendChild(card);
@@ -589,7 +639,7 @@
       regList.innerHTML = '';
       quizList.forEach((q) => {
         const row = document.createElement('div');
-        row.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 px-3 py-2 rounded text-xs';
+        row.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs';
         row.innerHTML = `
           <span><b>${q.title}</b> (${q.targetSrc} ➔ ${q.targetDst})</span>
           <button onclick="deleteQuiz('${q.id}')" class="text-rose-600 hover:text-rose-800 font-bold">削除</button>
@@ -748,6 +798,7 @@
         mask2: type === 'Router' ? '255.255.255.0' : '',
         mac2: type === 'Router' ? generateMac('00:1A:2C') : '',
         arpTable: {},
+        routes: type === 'Router' ? [] : undefined,
         dnsRecords: type === 'DNSServer' ? { 'example.com': '192.168.2.100' } : {}
       };
 
@@ -763,11 +814,11 @@
       cableSourceDeviceId = null;
       const btn = document.getElementById('cableModeBtn');
       if (isCableMode) {
-        btn.textContent = '🔌 配線モード: ON (選択待機)';
+        btn.textContent = '🔌 配線中: 選択待機';
         btn.className = 'bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded transition shadow ring-2 ring-white font-semibold text-white';
         addLog('【配線モードON】繋ぎたい1台目の機器をクリックしてください。', 'text-amber-300');
       } else {
-        btn.textContent = '🔌 ケーブル配線モード: OFF';
+        btn.textContent = '🔌 配線: OFF';
         btn.className = 'bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded transition shadow flex items-center gap-1 font-semibold text-white';
       }
       renderAll();
@@ -777,7 +828,7 @@
       if (isCableMode) {
         if (!cableSourceDeviceId) {
           cableSourceDeviceId = dev.id;
-          document.getElementById('cableModeBtn').textContent = `🔌 配線先を選択中: [${dev.name}] ➡️ ?`;
+          document.getElementById('cableModeBtn').textContent = `🔌 配線中: [${dev.name}] ➔ ?`;
           addLog(`[配線] 始点: ${dev.name} を選択。接続先の機器をクリックしてください。`, 'text-amber-200');
           renderAll();
         } else {
@@ -842,14 +893,19 @@
         if (isCableSource) borderClass = 'border-amber-500 ring-4 ring-amber-200 animate-pulse';
         else if (isSelected) borderClass = 'border-blue-500 ring-2 ring-blue-200';
 
-        el.className = `device-node absolute bg-white border-2 rounded-xl p-2.5 shadow-md cursor-grab active:cursor-grabbing flex flex-col items-center w-28 select-none transition-shadow z-10 ${borderClass}`;
+        el.className = `device-node absolute bg-white border-2 rounded-xl p-2 shadow-md cursor-grab active:cursor-grabbing flex flex-col items-center w-28 select-none transition-shadow z-10 ${borderClass}`;
         el.style.left = `${dev.x}px`;
         el.style.top = `${dev.y}px`;
 
+        let subText = dev.type === 'Switch' ? 'L2 Bridge' : dev.ip;
+        if (dev.type === 'Router' && dev.ip2) {
+          subText = `${dev.ip} / ${dev.ip2}`;
+        }
+
         el.innerHTML = `
           <div class="text-3xl pointer-events-none">${ICONS[dev.type] || '📦'}</div>
-          <div class="text-xs font-bold text-slate-700 mt-1 truncate w-full text-center pointer-events-none">${dev.name}</div>
-          <div class="text-[10px] text-slate-500 truncate w-full text-center font-mono pointer-events-none">${dev.type === 'Switch' ? 'L2 Bridge' : dev.ip}</div>
+          <div class="text-xs font-bold text-slate-700 mt-0.5 truncate w-full text-center pointer-events-none">${dev.name}</div>
+          <div class="text-[9px] text-slate-500 truncate w-full text-center font-mono pointer-events-none">${subText}</div>
         `;
 
         el.addEventListener('pointerdown', (e) => onPointerDown(e, dev));
@@ -941,6 +997,7 @@
       const macSection = document.getElementById('macDisplayDiv');
       const arpSection = document.getElementById('arpTableSection');
       const routerExtra = document.getElementById('routerExtraSection');
+      const routerRouting = document.getElementById('routerRoutingSection');
       const gwDiv = document.getElementById('gwConfigDiv');
       const dnsDiv = document.getElementById('dnsConfigDiv');
       const dnsRecordSection = document.getElementById('dnsRecordSection');
@@ -950,6 +1007,7 @@
         macSection.classList.add('hidden');
         arpSection.classList.add('hidden');
         routerExtra.classList.add('hidden');
+        routerRouting.classList.add('hidden');
         dnsRecordSection.classList.add('hidden');
       } else {
         ipSection.classList.remove('hidden');
@@ -963,13 +1021,16 @@
           dnsDiv.classList.add('hidden');
           dnsRecordSection.classList.add('hidden');
           routerExtra.classList.remove('hidden');
+          routerRouting.classList.remove('hidden');
           document.getElementById('cfgIp2').value = dev.ip2 || '';
           document.getElementById('cfgMask2').value = dev.mask2 || '255.255.255.0';
           document.getElementById('cfgMac2').textContent = dev.mac2 || 'N/A';
+          renderRoutingTable(dev);
         } else if (dev.type === 'DNSServer') {
           gwDiv.classList.remove('hidden');
           dnsDiv.classList.add('hidden');
           routerExtra.classList.add('hidden');
+          routerRouting.classList.add('hidden');
           dnsRecordSection.classList.remove('hidden');
           document.getElementById('cfgGw').value = dev.gw || '';
           renderDnsRecords(dev);
@@ -977,6 +1038,7 @@
           gwDiv.classList.remove('hidden');
           dnsDiv.classList.remove('hidden');
           routerExtra.classList.add('hidden');
+          routerRouting.classList.add('hidden');
           dnsRecordSection.classList.add('hidden');
           document.getElementById('cfgGw').value = dev.gw || '';
           document.getElementById('cfgDns').value = dev.dns || '';
@@ -985,6 +1047,68 @@
 
       renderArpTable(dev);
       renderAll();
+    }
+
+    function renderRoutingTable(routerDev) {
+      const container = document.getElementById('routingTableList');
+      container.innerHTML = '';
+
+      const autoRoutes = [
+        { dest: intToIp((ipToInt(routerDev.ip) & ipToInt(routerDev.mask)) >>> 0), mask: routerDev.mask, ifName: 'IF1 (直結)' }
+      ];
+      if (routerDev.ip2) {
+        autoRoutes.push({ dest: intToIp((ipToInt(routerDev.ip2) & ipToInt(routerDev.mask2)) >>> 0), mask: routerDev.mask2, ifName: 'IF2 (直結)' });
+      }
+
+      autoRoutes.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-100 border border-slate-200 px-2 py-1 rounded text-[11px] font-mono text-slate-600 flex justify-between';
+        item.innerHTML = `<span><b>${r.dest}</b>/${getPrefixLength(ipToInt(r.mask))}</span><span class="text-blue-600 font-bold">${r.ifName}</span>`;
+        container.appendChild(item);
+      });
+
+      const routes = routerDev.routes || [];
+      routes.forEach((r, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-blue-50 border border-blue-200 px-2 py-1 rounded text-[11px] font-mono text-slate-800 flex justify-between items-center';
+        item.innerHTML = `
+          <span><b>${r.dest}</b>/${getPrefixLength(ipToInt(r.mask))} ➔ ${r.nextHop}</span>
+          <button onclick="removeStaticRoute(${idx})" class="text-rose-500 hover:text-rose-700 font-bold ml-1">&times;</button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addStaticRoute() {
+      const dev = devices.find(d => d.id === selectedDeviceId);
+      if (!dev || dev.type !== 'Router') return;
+
+      const dest = document.getElementById('newRouteDest').value.trim();
+      const mask = document.getElementById('newRouteMask').value.trim();
+      const nextHop = document.getElementById('newRouteNextHop').value.trim();
+
+      if (!dest || !mask || !nextHop) {
+        alert('宛先ネットワーク、マスク、Next Hop IPを入力してください。');
+        return;
+      }
+
+      if (!dev.routes) dev.routes = [];
+      dev.routes.push({ dest, mask, nextHop });
+      document.getElementById('newRouteDest').value = '';
+      document.getElementById('newRouteMask').value = '';
+      document.getElementById('newRouteNextHop').value = '';
+
+      saveToStorage();
+      renderRoutingTable(dev);
+      addLog(`[ルート追加] ${dev.name}: ${dest}/${getPrefixLength(ipToInt(mask))} ➔ NextHop ${nextHop}`, 'text-blue-300');
+    }
+
+    function removeStaticRoute(idx) {
+      const dev = devices.find(d => d.id === selectedDeviceId);
+      if (!dev || dev.type !== 'Router' || !dev.routes) return;
+      dev.routes.splice(idx, 1);
+      saveToStorage();
+      renderRoutingTable(dev);
     }
 
     function renderDnsRecords(dev) {
@@ -1081,7 +1205,6 @@
       addLog(`[ARP] 全機器のARPテーブル（キャッシュ）を消去しました。`, 'text-indigo-400 font-bold');
     }
 
-    // 端末設定の変更ハンドラ
     function updateCurrentNode() {
       const dev = devices.find(d => d.id === selectedDeviceId);
       if (!dev) return;
@@ -1105,7 +1228,6 @@
       renderAll();
       updateSelectDropdowns();
 
-      // ★ モーダルが開いていればリアルタイムに再計算して画面更新
       if (!document.getElementById('bitModal').classList.contains('hidden')) {
         updateBitModalLive();
       }
@@ -1145,7 +1267,7 @@
         const targetDev = devices.find(d => d.id === targetId);
         if (!targetDev) return;
         const row = document.createElement('div');
-        row.className = 'flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-200';
+        row.className = 'flex justify-between items-center bg-slate-50 p-1 rounded border border-slate-200';
         row.innerHTML = `
           <span>🔌 ${targetDev.name}</span>
           <button onclick="removeLink('${l.id}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">切断</button>
@@ -1220,6 +1342,7 @@
           devices.forEach(d => {
             if (!d.mac) d.mac = generateMac();
             if (d.type === 'Router' && !d.mac2) d.mac2 = generateMac('00:1A:2C');
+            if (d.type === 'Router' && !d.routes) d.routes = [];
             if (!d.arpTable) d.arpTable = {};
             if (d.type === 'DNSServer' && !d.dnsRecords) {
               d.dnsRecords = { 'example.com': '192.168.2.100' };
@@ -1247,11 +1370,12 @@
         closeConfigPanel();
         renderAll();
         updateSelectDropdowns();
+        resetPacketInspector();
         document.getElementById('logContainer').innerHTML = '<div class="text-slate-500">データを全消去しました。</div>';
       }
     }
 
-    // --- IP・ビット演算ユーティリティ ---
+    // --- IP・ビット演算 ---
     function ipToInt(ip) {
       if (!ip || typeof ip !== 'string') return null;
       const parts = ip.split('.').map(Number);
@@ -1347,6 +1471,34 @@
       box.scrollTop = box.scrollHeight;
     }
 
+    function updatePacketInspector(hopTitle, srcMac, dstMac, srcIp, dstIp, ttl) {
+      document.getElementById('inspectHopBadge').textContent = hopTitle;
+
+      const srcMacEl = document.getElementById('hdrSrcMac');
+      const dstMacEl = document.getElementById('hdrDstMac');
+
+      srcMacEl.textContent = srcMac;
+      dstMacEl.textContent = dstMac;
+      document.getElementById('hdrSrcIp').textContent = srcIp;
+      document.getElementById('hdrDstIp').textContent = dstIp;
+      document.getElementById('hdrTtl').textContent = ttl;
+
+      srcMacEl.classList.remove('mac-change');
+      dstMacEl.classList.remove('mac-change');
+      void srcMacEl.offsetWidth;
+      srcMacEl.classList.add('mac-change');
+      dstMacEl.classList.add('mac-change');
+    }
+
+    function resetPacketInspector() {
+      document.getElementById('inspectHopBadge').textContent = '待機中';
+      document.getElementById('hdrSrcMac').textContent = '-';
+      document.getElementById('hdrDstMac').textContent = '-';
+      document.getElementById('hdrSrcIp').textContent = '-';
+      document.getElementById('hdrDstIp').textContent = '-';
+      document.getElementById('hdrTtl').textContent = '-';
+    }
+
     async function animatePacket(nodeIdPath, color = '#38bdf8') {
       const svg = document.getElementById('svgLayer');
 
@@ -1388,7 +1540,7 @@
       addLog(`📢 [ARP Request] ${senderDev.name}: Who has ${targetIp}? Tell ${senderDev.ip} (Broadcast FF:FF:FF:FF:FF:FF)`, 'text-amber-300 font-bold');
       await animatePacket(directPath, '#fbbf24');
 
-      addLog(`📬 [ARP Reply] 該当ノードが応答: ${targetIp} is at ${targetMac} (Unicast)`, 'text-purple-300 font-bold');
+      addLog(`📬 [ARP Reply] 応答: ${targetIp} is at ${targetMac} (Unicast)`, 'text-purple-300 font-bold');
       await animatePacket([...directPath].reverse(), '#c084fc');
 
       if (!senderDev.arpTable) senderDev.arpTable = {};
@@ -1399,107 +1551,245 @@
       addLog(`💾 [ARP Cache更新] ${senderDev.name} に [${targetIp} ➔ ${targetMac}] を登録。`, 'text-emerald-300');
     }
 
-    async function transportPacket(srcDev, dstDev, reqColor = '#38bdf8', resColor = '#4ade80') {
-      const srcSeesDstAsLocal = isSameSubnet(srcDev.ip, dstDev.ip, srcDev.mask);
-
-      if (srcSeesDstAsLocal) {
-        const path = findPhysicalPath(srcDev.id, dstDev.id);
-        if (!path) {
-          addLog(`❌【物理切断】${srcDev.name} から ${dstDev.name} への物理ケーブル結線がありません。`, 'text-rose-400');
-          return false;
-        }
-
-        if (!srcDev.arpTable || !srcDev.arpTable[dstDev.ip]) {
-          addLog(`⚡ [ARP] ${srcDev.name} が ${dstDev.name} (${dstDev.ip}) のMACを問い合わせます...`, 'text-amber-200');
-          await performArpResolution(srcDev, dstDev.ip, dstDev.mac, path);
-        }
-
-        await animatePacket(path, reqColor);
-        addLog(`📦 [受信確認] ${dstDev.name} がパケットを受信。応答(Echo Reply)の返信を試みます...`);
-
-        const dstSeesSrcAsLocal = isSameSubnet(dstDev.ip, srcDev.ip, dstDev.mask);
-        if (!dstSeesSrcAsLocal) {
-          if (!dstDev.gw) {
-            addLog(`❌【戻り通信失敗】${dstDev.name} のサブネットマスク (${dstDev.mask}) では、送信元 (${srcDev.ip}) は外部セグメント扱いになりますが、デフォルトゲートウェイが未設定のため返信パケットを戻せません！`, 'text-rose-400 font-bold');
-            return false;
-          } else {
-            addLog(`❌【戻り通信失敗】${dstDev.name} と ${srcDev.name} のサブネットマスクが一致しておらず、経路が不整合です。`, 'text-rose-400 font-bold');
-            return false;
-          }
-        }
-
-        await animatePacket([...path].reverse(), resColor);
-        return true;
-      } else {
-        if (!srcDev.gw) {
-          addLog(`❌【GW未設定】${srcDev.name} にデフォルトゲートウェイが未設定です。`, 'text-rose-400');
-          return false;
-        }
-        if (!isSameSubnet(srcDev.ip, srcDev.gw, srcDev.mask)) {
-          addLog(`❌【GW不整合】${srcDev.name} のDG (${srcDev.gw}) が自身のサブネット外です。`, 'text-rose-400');
-          return false;
-        }
-
-        const router = devices.find(d => d.type === 'Router' && (d.ip === srcDev.gw || d.ip2 === srcDev.gw));
-        if (!router) {
-          addLog(`❌【通信不可】DG (${srcDev.gw}) を持つルータが存在しません。`, 'text-rose-400');
-          return false;
-        }
-
-        const pathToRouter = findPhysicalPath(srcDev.id, router.id);
-        if (!pathToRouter) {
-          addLog(`❌【物理切断】${srcDev.name} と ルータ ${router.name} 間にケーブルがありません。`, 'text-rose-400');
-          return false;
-        }
-
-        const rMac = (router.ip === srcDev.gw) ? router.mac : router.mac2;
-        if (!srcDev.arpTable || !srcDev.arpTable[srcDev.gw]) {
-          await performArpResolution(srcDev, srcDev.gw, rMac, pathToRouter);
-        }
-
-        const routeOk1 = isSameSubnet(router.ip, dstDev.ip, router.mask);
-        const routeOk2 = router.ip2 && isSameSubnet(router.ip2, dstDev.ip, router.mask2);
-        if (!routeOk1 && !routeOk2) {
-          addLog(`❌【ルーティング不可】ルータ ${router.name} に ${dstDev.name} への経路がありません。`, 'text-rose-400');
-          return false;
-        }
-
-        const pathFromRouter = findPhysicalPath(router.id, dstDev.id);
-        if (!pathFromRouter) {
-          addLog(`❌【物理切断】ルータ ${router.name} と ${dstDev.name} 間にケーブルがありません。`, 'text-rose-400');
-          return false;
-        }
-
-        if (!router.arpTable || !router.arpTable[dstDev.ip]) {
-          await performArpResolution(router, dstDev.ip, dstDev.mac, pathFromRouter);
-        }
-
-        if (dstDev.type !== 'Router') {
-          const expectedGw = (router.ip === srcDev.gw) ? router.ip2 : router.ip;
-          if (dstDev.gw !== expectedGw) {
-            addLog(`❌【戻り通信失敗】${dstDev.name} のDG (${dstDev.gw}) がルータの対向側IP (${expectedGw}) と一致しません。`, 'text-rose-400');
-            return false;
-          }
-        }
-
-        await animatePacket(pathToRouter, reqColor);
-        await animatePacket(pathFromRouter, reqColor);
-        await animatePacket([...pathFromRouter].reverse(), resColor);
-        await animatePacket([...pathToRouter].reverse(), resColor);
-        return true;
+    function resolveRouterNextHop(router, destIp) {
+      if (isSameSubnet(router.ip, destIp, router.mask)) {
+        return { type: 'DIRECT', egressIfIp: router.ip, egressMac: router.mac, nextHopIp: destIp };
       }
+      if (router.ip2 && isSameSubnet(router.ip2, destIp, router.mask2)) {
+        return { type: 'DIRECT', egressIfIp: router.ip2, egressMac: router.mac2, nextHopIp: destIp };
+      }
+
+      let bestMatch = null;
+      let maxPrefix = -1;
+
+      const routes = router.routes || [];
+      routes.forEach(r => {
+        const dInt = ipToInt(r.dest);
+        const mInt = ipToInt(r.mask);
+        const targetInt = ipToInt(destIp);
+
+        if ((targetInt & mInt) === (dInt & mInt)) {
+          const prefix = getPrefixLength(mInt);
+          if (prefix > maxPrefix) {
+            maxPrefix = prefix;
+            bestMatch = r;
+          }
+        }
+      });
+
+      if (bestMatch) {
+        const hopIp = bestMatch.nextHop || bestMatch.nextHopIp;
+        let egressIfIp = router.ip;
+        let egressMac = router.mac;
+        if (router.ip2 && isSameSubnet(router.ip2, hopIp, router.mask2)) {
+          egressIfIp = router.ip2;
+          egressMac = router.mac2;
+        }
+        return { type: 'NEXT_HOP', egressIfIp, egressMac, nextHopIp: hopIp };
+      }
+
+      return null;
     }
 
-    // --- メインシミュレーション実行 ---
+    async function forwardHop(fromDev, toDev, egressMac, ingressMac, packetMeta, hopDesc) {
+      updatePacketInspector(
+        hopDesc,
+        egressMac,
+        ingressMac,
+        packetMeta.srcIp,
+        packetMeta.dstIp,
+        packetMeta.ttl
+      );
+
+      const path = findPhysicalPath(fromDev.id, toDev.id);
+      if (!path) {
+        addLog(`❌【物理切断】${fromDev.name} と ${toDev.name} 間にケーブル接続がありません。`, 'text-rose-400');
+        return false;
+      }
+
+      const nextIp = packetMeta.currentNextIp;
+      if (!fromDev.arpTable || !fromDev.arpTable[nextIp]) {
+        addLog(`⚡ [ARP] ${fromDev.name} が ${nextIp} のMACアドレスを問い合わせます...`, 'text-amber-200');
+        await performArpResolution(fromDev, nextIp, ingressMac, path);
+      }
+
+      addLog(`🚀 [ホップ転送] ${fromDev.name} ──> ${toDev.name} | MAC: [${egressMac} ➔ ${ingressMac}] | IP: [${packetMeta.srcIp} ➔ ${packetMeta.dstIp}] (TTL:${packetMeta.ttl})`, 'text-sky-300');
+      await animatePacket(path, packetMeta.color || '#38bdf8');
+      return true;
+    }
+
+    // --- ★ 往復マルチホップ転送エンジン（第3問バグ修正済み） ---
+    async function routeMultiHop(srcDev, dstDev, reqColor = '#38bdf8', resColor = '#4ade80') {
+      // 1. 同一LAN
+      if (isSameSubnet(srcDev.ip, dstDev.ip, srcDev.mask)) {
+        addLog(`ℹ️ [同一セグメント] 送信元と宛先は同一LAN内です（ルータ不要）。`, 'text-slate-300');
+
+        const fwdOk = await forwardHop(srcDev, dstDev, srcDev.mac, dstDev.mac, {
+          srcIp: srcDev.ip,
+          dstIp: dstDev.ip,
+          ttl: 64,
+          currentNextIp: dstDev.ip,
+          color: reqColor
+        }, `直接通信: ${srcDev.name} ➔ ${dstDev.name}`);
+        if (!fwdOk) return false;
+
+        if (!isSameSubnet(dstDev.ip, srcDev.ip, dstDev.mask)) {
+          addLog(`❌【戻り失敗】${dstDev.name} のサブネットマスク設定により、返信パケットを戻せません。`, 'text-rose-400 font-bold');
+          return false;
+        }
+
+        const retOk = await forwardHop(dstDev, srcDev, dstDev.mac, srcDev.mac, {
+          srcIp: dstDev.ip,
+          dstIp: srcDev.ip,
+          ttl: 64,
+          currentNextIp: srcDev.ip,
+          color: resColor
+        }, `応答返信: ${dstDev.name} ➔ ${srcDev.name}`);
+        return retOk;
+      }
+
+      // 2. 外部ネットワーク
+      if (!srcDev.gw) {
+        addLog(`❌【GW未設定】${srcDev.name} にデフォルトゲートウェイが設定されていません。`, 'text-rose-400');
+        return false;
+      }
+      if (!isSameSubnet(srcDev.ip, srcDev.gw, srcDev.mask)) {
+        addLog(`❌【GW不整合】${srcDev.name} のDG (${srcDev.gw}) が自身のサブネット外です。`, 'text-rose-400');
+        return false;
+      }
+
+      let currentRouter = devices.find(d => d.type === 'Router' && (d.ip === srcDev.gw || d.ip2 === srcDev.gw));
+      if (!currentRouter) {
+        addLog(`❌【通信不可】DG (${srcDev.gw}) を持つルータがネットワーク上に存在しません。`, 'text-rose-400');
+        return false;
+      }
+
+      const routerIngressMac = (currentRouter.ip === srcDev.gw) ? currentRouter.mac : currentRouter.mac2;
+
+      // === 行き（Echo Request） ===
+      let packet = {
+        srcIp: srcDev.ip,
+        dstIp: dstDev.ip,
+        ttl: 64,
+        currentNextIp: srcDev.gw,
+        color: reqColor
+      };
+
+      let ok = await forwardHop(srcDev, currentRouter, srcDev.mac, routerIngressMac, packet, `ホップ 1: ${srcDev.name} ➔ ${currentRouter.name}`);
+      if (!ok) return false;
+
+      let hopCount = 1;
+      let visitedRouters = new Set([currentRouter.id]);
+      let traversedHops = [{ from: srcDev, to: currentRouter, egressMac: srcDev.mac, ingressMac: routerIngressMac }];
+
+      while (true) {
+        packet.ttl--;
+        if (packet.ttl <= 0) {
+          addLog(`❌【TTL枯渇】Time To Live が0になりました。`, 'text-rose-400');
+          return false;
+        }
+
+        const routeResult = resolveRouterNextHop(currentRouter, dstDev.ip);
+        if (!routeResult) {
+          addLog(`❌【ルーティング失敗】${currentRouter.name} に宛先 (${dstDev.ip}) への経路がありません。`, 'text-rose-400 font-bold');
+          return false;
+        }
+
+        if (routeResult.type === 'DIRECT') {
+          hopCount++;
+          packet.currentNextIp = dstDev.ip;
+          ok = await forwardHop(currentRouter, dstDev, routeResult.egressMac, dstDev.mac, packet, `ホップ ${hopCount} (最終): ${currentRouter.name} ➔ ${dstDev.name}`);
+          if (!ok) return false;
+          traversedHops.push({ from: currentRouter, to: dstDev, egressMac: routeResult.egressMac, ingressMac: dstDev.mac });
+          break;
+        } else {
+          const nextHopRouter = devices.find(d => d.type === 'Router' && (d.ip === routeResult.nextHopIp || d.ip2 === routeResult.nextHopIp));
+          if (!nextHopRouter) {
+            addLog(`❌【NextHop到達不能】${currentRouter.name} が指定したNext Hop (${routeResult.nextHopIp}) を持つルータが存在しません。`, 'text-rose-400');
+            return false;
+          }
+          if (visitedRouters.has(nextHopRouter.id)) {
+            addLog(`❌【ルーティングループ】ルータ ${nextHopRouter.name} でループを検出しました。`, 'text-rose-400 font-bold');
+            return false;
+          }
+
+          const nextHopMac = (nextHopRouter.ip === routeResult.nextHopIp) ? nextHopRouter.mac : nextHopRouter.mac2;
+          hopCount++;
+          packet.currentNextIp = routeResult.nextHopIp;
+
+          addLog(`🌐 [ルータ間転送] ${currentRouter.name} ➔ ${nextHopRouter.name} (Next Hop: ${routeResult.nextHopIp})`, 'text-yellow-300 font-semibold');
+          ok = await forwardHop(currentRouter, nextHopRouter, routeResult.egressMac, nextHopMac, packet, `ホップ ${hopCount} (ルータ間): ${currentRouter.name} ➔ ${nextHopRouter.name}`);
+          if (!ok) return false;
+
+          traversedHops.push({ from: currentRouter, to: nextHopRouter, egressMac: routeResult.egressMac, ingressMac: nextHopMac });
+          visitedRouters.add(nextHopRouter.id);
+          currentRouter = nextHopRouter;
+        }
+      }
+
+      // === ★ 戻り（Echo Reply）の厳密なDG検証（第3問バグ修正箇所） ===
+      addLog(`📦 [受信完了] ${dstDev.name} がパケットを受信。応答(Echo Reply)を返信します...`);
+
+      if (dstDev.type !== 'Router') {
+        // 1. DG設定の有無
+        if (!dstDev.gw) {
+          addLog(`❌【戻り失敗】${dstDev.name} にデフォルトゲートウェイが未設定のため、返信パケットを外部へ戻せません。`, 'text-rose-400 font-bold');
+          return false;
+        }
+
+        // 2. 設定されたDGが自身のサブネット内にあるか
+        if (!isSameSubnet(dstDev.ip, dstDev.gw, dstDev.mask)) {
+          addLog(`❌【戻り失敗】${dstDev.name} のデフォルトゲートウェイ (${dstDev.gw}) は自身のサブネット (${dstDev.mask}) 外にあり、到達できません！`, 'text-rose-400 font-bold');
+          return false;
+        }
+
+        // 3. 直結している最終ホップ元ルータのインターフェースIPと一致しているか
+        const lastHopRouter = traversedHops[traversedHops.length - 1].from;
+        if (lastHopRouter.type === 'Router') {
+          const validRouterIps = [lastHopRouter.ip, lastHopRouter.ip2].filter(Boolean);
+          if (!validRouterIps.includes(dstDev.gw)) {
+            addLog(`❌【戻り失敗】${dstDev.name} のデフォルトゲートウェイ (${dstDev.gw}) が、直結ルータ ${lastHopRouter.name} のインターフェースIP (${validRouterIps.join(' / ')}) と一致していません！`, 'text-rose-400 font-bold');
+            return false;
+          }
+        }
+      }
+
+      let replyPacket = {
+        srcIp: dstDev.ip,
+        dstIp: srcDev.ip,
+        ttl: 64,
+        color: resColor
+      };
+
+      for (let i = traversedHops.length - 1; i >= 0; i--) {
+        const hop = traversedHops[i];
+        replyPacket.ttl--;
+        updatePacketInspector(
+          `戻りホップ ${traversedHops.length - i}: ${hop.to.name} ➔ ${hop.from.name}`,
+          hop.ingressMac,
+          hop.egressMac,
+          replyPacket.srcIp,
+          replyPacket.dstIp,
+          replyPacket.ttl
+        );
+        const path = findPhysicalPath(hop.to.id, hop.from.id);
+        await animatePacket(path, resColor);
+      }
+
+      return true;
+    }
+
+    // --- メイン通信シミュレーション ---
     async function runPingSimulation() {
       const srcId = document.getElementById('srcDeviceSelect').value;
       const dstRaw = document.getElementById('dstInput').value.trim();
       const pingBtn = document.getElementById('pingBtn');
       const logBox = document.getElementById('logContainer');
       logBox.innerHTML = '';
+      resetPacketInspector();
 
       if (!srcId || !dstRaw) {
-        addLog('【エラー】送信元と宛先（機器名またはドメイン）を入力してください。', 'text-amber-400');
+        addLog('【エラー】送信元と宛先を入力してください。', 'text-amber-400');
         return;
       }
 
@@ -1520,7 +1810,7 @@
       });
 
       if (ipCounts[src.ip] > 1) {
-        addLog(`❌【IP競合】送信元 ${src.name} のIP (${src.ip}) はネットワーク内の他機器と重複しています！`, 'text-rose-400 font-bold');
+        addLog(`❌【IP競合】送信元 ${src.name} のIP (${src.ip}) は重複しています！`, 'text-rose-400 font-bold');
         pingBtn.disabled = false;
         pingBtn.classList.remove('opacity-50');
         return;
@@ -1540,7 +1830,7 @@
         addLog(`🔤 [名前解決要求] "${domain}" はドメイン名です。DNS解決を開始します...`, 'text-indigo-300 font-bold');
 
         if (!src.dns) {
-          addLog(`❌【DNS解決失敗】送信元 ${src.name} に「優先DNSサーバ」が設定されていません。`, 'text-rose-400 font-bold');
+          addLog(`❌【DNS未設定】送信元 ${src.name} に「優先DNSサーバ」が設定されていません。`, 'text-rose-400 font-bold');
           pingBtn.disabled = false;
           pingBtn.classList.remove('opacity-50');
           return;
@@ -1548,23 +1838,23 @@
 
         const dnsServer = devices.find(d => d.type === 'DNSServer' && d.ip === src.dns);
         if (!dnsServer) {
-          addLog(`❌【DNS解決失敗】設定されたDNSサーバ (${src.dns}) がネットワーク上に存在しません。`, 'text-rose-400');
+          addLog(`❌【DNS解決失敗】DNSサーバ (${src.dns}) がネットワーク上に存在しません。`, 'text-rose-400');
           pingBtn.disabled = false;
           pingBtn.classList.remove('opacity-50');
           return;
         }
 
-        addLog(`📡 [DNS Query] ${src.name} ➔ DNSサーバ ${dnsServer.name} (${dnsServer.ip}) へ問合せ...`);
-        const dnsOk = await transportPacket(src, dnsServer, '#fb923c', '#fde047');
+        addLog(`📡 [DNS Query] ${src.name} ➔ DNSサーバ ${dnsServer.name} (${dnsServer.ip})...`);
+        const dnsOk = await routeMultiHop(src, dnsServer, '#fb923c', '#fde047');
         if (!dnsOk) {
-          addLog(`❌【DNS到達不能】DNSサーバ (${src.dns}) との通信が成立しませんでした。`, 'text-rose-400');
+          addLog(`❌【DNS到達不能】DNSサーバとの通信が成立しませんでした。`, 'text-rose-400');
           pingBtn.disabled = false;
           pingBtn.classList.remove('opacity-50');
           return;
         }
 
         if (!dnsServer.dnsRecords || !dnsServer.dnsRecords[domain]) {
-          addLog(`❌【DNS解決失敗 (NXDOMAIN)】DNSサーバ ${dnsServer.name} にドメイン "${domain}" のAレコードが存在しません。`, 'text-rose-400 font-bold');
+          addLog(`❌【DNS解決失敗 (NXDOMAIN)】ドメイン "${domain}" のAレコードが存在しません。`, 'text-rose-400 font-bold');
           pingBtn.disabled = false;
           pingBtn.classList.remove('opacity-50');
           return;
@@ -1590,7 +1880,7 @@
       }
 
       if (ipCounts[dst.ip] > 1) {
-        addLog(`❌【IP競合】宛先 ${dst.name} のIP (${dst.ip}) はネットワーク内で重複しています！`, 'text-rose-400 font-bold');
+        addLog(`❌【IP競合】宛先 ${dst.name} のIP (${dst.ip}) は重複しています！`, 'text-rose-400 font-bold');
         pingBtn.disabled = false;
         pingBtn.classList.remove('opacity-50');
         return;
@@ -1605,7 +1895,7 @@
         return;
       }
 
-      const commOk = await transportPacket(src, dst, '#38bdf8', '#4ade80');
+      const commOk = await routeMultiHop(src, dst, '#38bdf8', '#4ade80');
       if (commOk) {
         addLog(`🎉【通信成功】${src.name} ──> ${dst.name} (${targetIp}) への往復アクセスが完了しました！`, 'text-emerald-400 font-bold');
 
@@ -1625,18 +1915,16 @@
       pingBtn.classList.remove('opacity-50');
     }
 
-    // --- ★ リアルタイム再計算＆ビット演算モーダル制御 ---
     function updateBitModalLive() {
       const srcId = document.getElementById('srcDeviceSelect').value;
       const dstRaw = document.getElementById('dstInput').value.trim();
 
       const src = devices.find(d => d.id === srcId);
       if (!src) {
-        document.getElementById('bitModalTarget').textContent = '送信元が選択されていません';
+        document.getElementById('bitModalTarget').textContent = '送信元未選択';
         return;
       }
 
-      // 宛先IPの特定（名前解決またはIP直打ち）
       let targetIp = null;
       let dstName = dstRaw || '未指定';
       const isIpInput = /^(\d{1,3}\.){3}\d{1,3}$/.test(dstRaw);
@@ -1648,7 +1936,6 @@
       } else if (isIpInput) {
         targetIp = dstRaw;
       } else {
-        // DNSレコードから引いてみる
         const dnsServer = devices.find(d => d.type === 'DNSServer' && d.ip === src.dns);
         if (dnsServer && dnsServer.dnsRecords && dnsServer.dnsRecords[dstRaw.toLowerCase()]) {
           targetIp = dnsServer.dnsRecords[dstRaw.toLowerCase()];
@@ -1663,16 +1950,15 @@
       const summaryEl = document.getElementById('bitModalSummary');
 
       if (!srcIpInt || !srcMaskInt) {
-        document.getElementById('bitModalTarget').textContent = `${src.name}: IPまたはサブネットマスクの形式が不正です`;
-        summaryEl.className = 'p-3 rounded-lg border text-xs leading-relaxed bg-rose-950/40 border-rose-500/50 text-rose-300';
-        summaryEl.textContent = '送信元のIPアドレスまたはサブネットマスクの入力値が正しくありません。';
+        document.getElementById('bitModalTarget').textContent = `${src.name}: 書式不正`;
+        summaryEl.className = 'p-3 rounded-lg border text-xs bg-rose-950/40 border-rose-500/50 text-rose-300';
+        summaryEl.textContent = 'IPまたはサブネットマスクの入力が正しくありません。';
         return;
       }
 
       const prefix = getPrefixLength(srcMaskInt);
       document.getElementById('bitModalTarget').textContent = `${src.name} (${src.ip}/${prefix}) ──> ${dstName}`;
 
-      // 送信元の計算
       const srcNetInt = (srcIpInt & srcMaskInt) >>> 0;
       document.getElementById('bitSrcIpDec').textContent = src.ip;
       document.getElementById('bitSrcIpBin').innerHTML = formatBitHtml(srcIpInt, srcMaskInt);
@@ -1683,18 +1969,17 @@
 
       if (!dstIpInt) {
         document.getElementById('bitDstIpDec').textContent = targetIp || 'N/A';
-        document.getElementById('bitDstIpBin').textContent = '宛先IPを特定できません';
+        document.getElementById('bitDstIpBin').textContent = '宛先IP未確定';
         document.getElementById('bitDstMaskDec').textContent = `${src.mask} (/${prefix})`;
         document.getElementById('bitDstMaskBin').innerHTML = formatBitHtml(srcMaskInt, srcMaskInt);
         document.getElementById('bitDstNetDec').textContent = 'N/A';
         document.getElementById('bitDstNetBin').textContent = 'N/A';
 
-        summaryEl.className = 'p-3 rounded-lg border text-xs leading-relaxed bg-amber-950/40 border-amber-500/50 text-amber-300';
-        summaryEl.textContent = '有効な宛先機器またはドメイン名（Aレコード登録済み）を入力してください。';
+        summaryEl.className = 'p-3 rounded-lg border text-xs bg-amber-950/40 border-amber-500/50 text-amber-300';
+        summaryEl.textContent = '有効な宛先機器名またはドメイン名を入力してください。';
         return;
       }
 
-      // 宛先の計算（送信元マスクを適用）
       const dstNetInt = (dstIpInt & srcMaskInt) >>> 0;
       document.getElementById('bitDstIpDec').textContent = targetIp;
       document.getElementById('bitDstIpBin').innerHTML = formatBitHtml(dstIpInt, srcMaskInt);
@@ -1705,18 +1990,17 @@
 
       const isLocal = srcNetInt === dstNetInt;
       if (isLocal) {
-        summaryEl.className = 'p-3 rounded-lg border text-xs leading-relaxed bg-emerald-950/40 border-emerald-500/50 text-emerald-200';
+        summaryEl.className = 'p-3 rounded-lg border text-xs bg-emerald-950/40 border-emerald-500/50 text-emerald-200';
         summaryEl.innerHTML = `
           <div class="font-bold text-emerald-300 text-sm mb-1">✅ 判定結果: 同一ネットワーク (L2直接通信)</div>
-          送信元のネットワーク部【<span class="font-mono text-white">${intToIp(srcNetInt)}</span>】と、宛先IPに送信元マスクを適用した結果【<span class="font-mono text-white">${intToIp(dstNetInt)}</span>】が完全に一致しました。<br>
-          端末はルータを経由せず、同一LAN（スイッチ）経由で直接ARP解決・通信可能と判断します。
+          ネットワークアドレス【<span class="font-mono text-white">${intToIp(srcNetInt)}</span>】が一致しました。<br>
+          ルータを経由せず、同一LAN内のスイッチ経由で直接通信します。
         `;
       } else {
-        summaryEl.className = 'p-3 rounded-lg border text-xs leading-relaxed bg-rose-950/40 border-rose-500/50 text-rose-200';
+        summaryEl.className = 'p-3 rounded-lg border text-xs bg-rose-950/40 border-rose-500/50 text-rose-200';
         summaryEl.innerHTML = `
-          <div class="font-bold text-rose-300 text-sm mb-1">⚠️ 判定結果: 異なるネットワーク (L3ルータ経由が必要)</div>
-          送信元のネットワーク部【<span class="font-mono text-white">${intToIp(srcNetInt)}</span>】に対し、宛先側は【<span class="font-mono text-white">${intToIp(dstNetInt)}</span>】となり、ネットワーク部が一致しません。<br>
-          直接パケットを届けることはできないため、送信元はデフォルトゲートウェイ（ルータ）へパケットを委託します。
+          <div class="font-bold text-rose-300 text-sm mb-1">⚠️ 判定結果: 異なるネットワーク (L3ルーティング必須)</div>
+          ネットワーク部が一致しません。送信元はデフォルトゲートウェイへ委託し、ルータ間をホップしながらルーティングされます。
         `;
       }
     }
